@@ -88,4 +88,23 @@ you can add this also.
 * Apple LLVM 5.1 - Custom Compiler Flags
   * Other Warning Flags = -w
   
+* Be sure your controller file which using this library is .mm file but not .m file
+
+# Usage 
+
+In your FooViewController.mm
+```objective-c
+#import "FooViewController.h"
+#import "View.h"
+
+- (void)viewDidLoad{
+   [super viewDidLoad];
+   
+   //draw a black rectangle
+   box({60,100,200,200,0,"#000000"}) >> self.view;   
+
+}
+
+```
+ 
 
