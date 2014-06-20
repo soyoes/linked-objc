@@ -89,14 +89,26 @@ you can add this also.
 }
 ```
 
-#Gradient, Border, Shadow ...
+#Gradient, Border, Shadow, Opacity ...
 ```objective-c
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 
-    /*Gradient*/
+    /*Gradient : 10%:red, 80%:yellow, 100%:white*/
     box({.w=60,.h=100,.bgcolor="#ff0000:10 #ffff00:80 #ffffff:100"}) >> self.view;
+    
+    /*Shadow : xOffset=1, yOffset=1, radius=5, color=RGBA(#00000099)*/
+    box({.w=60,.h=100,.shadow="1 1 5 #00000099"}) >> self.view;
+    
+    /*Inter Shadow : innerXOffset=3, innerYOffset=3, radius=2, color=RGBA(#00000044)*/
+    box({.w=60,.h=100,.shadow="3 3 2 #00000044"}) >> self.view;
+    
+    /*Opacity/alpha : alpha=0.9 means opacity=0.1 !!! */
+    box({.w=60,.h=100,.alpha=0.9}) >> self.view;
+    
+    /*Border: borderWidth=1 borderColor=#ff0000 cornerRadius=3 */
+    box({.w=60,.h=100,.border="1 #FF0000 3"}) >> self.view;
         
 }
 ```
