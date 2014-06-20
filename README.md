@@ -186,6 +186,57 @@ you can add this also.
 
 ```
 
+## Drag & Drop
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];  
+   
+    /*
+    GR = shortcut of UIGestureRecognizer, defines in Styles.h
+    Dic = shortcut of NSDictionary, defines in Styles.h
+   
+    */
+    box({0,0,100,100,0,"#ff0000"})
+      .dragable(
+            ^(GR *g, Dic *p){},                    //on drag callback
+            ^(GR *g, Dic *p){NSLog(@"finished");}  //on finish callback
+      )
+      >> self.view;
+}
+
+```
+
+
+## Animation (transition with UIDynamicAnimator)
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];  
+
+    $& car = img(@"mycar.png",{0,0,200,60}) >> self.view;
+    
+    //add 2 x gravity towards (320,0) and make it move.
+    car.addGravity(@{@"speed":@2,@"x":@320,@"y":@0}).startMove();
+    
+    //add a one time force to car towards (320,0) and make it move.
+    car.addPush(@{@"speed":@2,@"x":@320,@"y":@0}).startMove();
+    
+    //add snap (quick move with shaking effect) to car towards (320,400)
+    car.addSnap(@{@"x":@320,@"y":@400}).startMove();
+    
+    
+    car.addGravity(@{@"x":@320,@"y":@568})   //add gravity towards (320,568)
+      .addCollision(nil)                     //also add a collision area with the default option 
+                                             //(the frame of its superview = self.view)
+      .startMove();                          //execute all the animations.
+      
+}
+
+```
+
 
 ## Usage 
 
