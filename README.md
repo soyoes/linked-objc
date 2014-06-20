@@ -46,7 +46,7 @@ you can add this also.
   
 * Be sure your controller file which using this library is .mm file but not .m file
 
-# View Rendering
+## View Rendering
 ```objective-c
 - (void)viewDidLoad
 {
@@ -67,7 +67,7 @@ you can add this also.
 
 ```
 
-# Use Style sheet
+## Use Style sheet
 
 ```objective-c
 - (void)viewDidLoad
@@ -89,7 +89,7 @@ you can add this also.
 }
 ```
 
-#Gradient, Border, Shadow, Opacity ...
+## Gradient, Border, Shadow, Opacity ...
 ```objective-c
 - (void)viewDidLoad
 {
@@ -113,7 +113,7 @@ you can add this also.
 }
 ```
 
-# Handle Gesture Event
+## Handle Gesture Event
 
 ```objective-c
 - (void)viewDidLoad
@@ -136,7 +136,7 @@ you can add this also.
 ```
 
 
-# Draw Label and text
+## Draw Label and text
 
 ```objective-c
 - (void)viewDidLoad
@@ -159,7 +159,7 @@ you can add this also.
 
 ```
 
-# Draw Image
+## Draw Image
 
 ```objective-c
 - (void)viewDidLoad
@@ -171,7 +171,7 @@ you can add this also.
 
 ```
 
-# Draw SVG Path
+## Draw SVG Path
 
 ```objective-c
 - (void)viewDidLoad
@@ -187,7 +187,7 @@ you can add this also.
 ```
 
 
-# Usage 
+## Usage 
 
 In your FooViewController.mm
 ```objective-c
