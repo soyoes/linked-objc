@@ -25,10 +25,9 @@ Rock your OBJC like script language
     * .rotate = 90|180|270 ...   
     * .rotate3d = 45,1,0,0,500,0.5,1
     * text editing | display features: .nowrap ,.truncate, .editable
-# Examples
 
+# View Rendering
 ```objective-c
-
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -44,34 +43,105 @@ Rock your OBJC like script language
         << label(@"test1", {50,50,100,30,0,"#000000","#FF0000"})
         << label(@"test2", {50,100,100,30,0,"#000000","#FF0000"})
         >> self.view;
-    
-    /*Also you can define style sheet to make organize your code*/    
+}
+
+```
+
+# Use Style sheet
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+
+    /*
+    You can define style sheet to make organize your code
+    This is just an example, you should put these style defination in some header file outside.
+    */    
     Styles box_style = {0,0,200,200,10,"#ffffff"};   
     Styles label_style = {0,0,100,30,0,"#00000"};
+    
     
     $ b = box({60,100},&box_style)
         << label(@"test1", {.y=50,.color="#FF0000"}, &label_style)
         << label(@"test2", {.y=100,.color="#0000FF"}, &label_style)
         >> self.view;
-    
+}
+```
+
+# Handle Gesture Event
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];    
     /* 
       handle guesture events 
       add a label to self.view
       when this label is tapped, "Your Param is value1" will be printed out in the console.
+      also you can use other gestures like @"pan",@"pinch",@"rotation",@"swipe",@"longPress",@"screenEdgePan",
     */
     label(@"Click Me", {0,200,200,50})
       .bind(@"tap",^(UIGestureRecognizer *r, NSDictionary *p) {
         NSLog(@"Your Param is %@",p[@"param1"]);
       }, @{@"param1":@"value1"})
       >> self.view;
-    
-    /* Image */
-    img(@"myimg.png") >> self.view;
-    
-    
+}
+```
+
+
+# Draw Label and text
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];  
+    /* draw label or text */
+    label(@"my text ...",{
+         .w=300,.h=40,     //required, you can specify these with stylesheet 
+         .font="Arial,15", //format : fontName,fontSize
+         .color="#ffff00", 
+         .paddingLeft=5,   // optional,padding,paddingRight,paddingBottom,paddingTop are also ok
+         .textAlign="left" // optional,left | right | center
+         .nowrap=YES       // optional,whether wrap text to multiple row , default=true
+         .truncate=NO      // optional,truncate text to ..., default = NO truncate
+         .placeHolder="input your text here ..."   //optional,symilar with html placeholder
+         .editable=YES     //optional,with this option use can edit the text inside.
+         }) 
+         >> self.view;
 }
 
 ```
+
+# Draw Image
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];  
+    /* draw an image and flip horizontal (flip will be changed later)*/
+    img(@"myimg.png",{.w=300,.h=200,.flip="H"}) >> self.view;
+}
+
+```
+
+# Draw SVG Path
+
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];  
+    /*  
+      Draw a rectangle which's top-right-corner-radius=10 with svg path .
+      and set background color to red.
+    */
+    svgp(@"M0 0 L90 0 Q100,0 100,10 L100 100 L0 100 Z", {0,0,100,100,0,"#ff0000"}) >> self.view;
+}
+
+```
+
+
+
 
 # Configuration
 
@@ -106,5 +176,6 @@ In your FooViewController.mm
 }
 
 ```
- 
+
+
 
