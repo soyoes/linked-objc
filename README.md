@@ -25,6 +25,26 @@ Rock your OBJC like script language
     * .rotate = 90|180|270 ...   
     * .rotate3d = 45,1,0,0,500,0.5,1
     * text editing | display features: .nowrap ,.truncate, .editable
+* Support SVG path drawing
+* maker animation easier with UIDynamicAnimator
+
+
+# Configuration
+
+Be sure you have these in your xcode -> build settings
+
+* Apple LLVM 5.1 - Language
+  * C Language Dialect = gnu11 or c11
+
+* Apple LLVM 5.1 - Language - C ++
+  * C++ Language Dialect = gnu++11 or c++11
+
+If there is too many warnings 
+you can add this also.
+* Apple LLVM 5.1 - Custom Compiler Flags
+  * Other Warning Flags = -w
+  
+* Be sure your controller file which using this library is .mm file but not .m file
 
 # View Rendering
 ```objective-c
@@ -69,6 +89,18 @@ Rock your OBJC like script language
 }
 ```
 
+#Gradient, Border, Shadow ...
+```objective-c
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+
+    /*Gradient*/
+    box({.w=60,.h=100,.bgcolor="#ff0000:10 #ffff00:80 #ffffff:100"}) >> self.view;
+        
+}
+```
+
 # Handle Gesture Event
 
 ```objective-c
@@ -84,6 +116,8 @@ Rock your OBJC like script language
     label(@"Click Me", {0,200,200,50})
       .bind(@"tap",^(UIGestureRecognizer *r, NSDictionary *p) {
         NSLog(@"Your Param is %@",p[@"param1"]);
+        Mask* m = r.view;    // get gesture mask
+        m.owner->unbind(@"tap"); // remove event.
       }, @{@"param1":@"value1"})
       >> self.view;
 }
@@ -140,25 +174,6 @@ Rock your OBJC like script language
 
 ```
 
-
-
-
-# Configuration
-
-Be sure you have these in your xcode -> build settings
-
-* Apple LLVM 5.1 - Language
-  * C Language Dialect = gnu11 or c11
-
-* Apple LLVM 5.1 - Language - C ++
-  * C++ Language Dialect = gnu++11 or c++11
-
-If there is too many warnings 
-you can add this also.
-* Apple LLVM 5.1 - Custom Compiler Flags
-  * Other Warning Flags = -w
-  
-* Be sure your controller file which using this library is .mm file but not .m file
 
 # Usage 
 
