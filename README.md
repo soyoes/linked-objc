@@ -249,7 +249,34 @@ you can add this also.
 }
 
 ```
+## Manipulate 
 
+In your FooViewController.mm
+```objective-c
+- (void)viewDidLoad{
+    [super viewDidLoad];
+   
+    /* Child */
+    View b = box({.z=10,.x=60,.y=100,.w=200,.h=200,.bgcolor="#ffffff"})
+        << label(@"test1", {.x=50,.y=50,.w=100,.h=30,.color="#ff0000",.bgcolor="#000000"})
+        << label(@"test2", {.x=50,.y=100,.w=100,.h=30,.color="#0000ff",.bgcolor="#000000"})
+        >> self.view;
+    $* firstChild = b[0];
+    $* secondChild = b[1];
+    NSLog(@"fistChild Text:%@", firstChild->text);
+    NSLog(@"secondChild Text:%@", secondChild->text);
+
+    /* Find by ID */
+    box({.ID=@"MY_ID", .z=10,.x=60,.y=100,.w=200,.h=200,.bgcolor="#FFFF00"}) >> self.view;
+    $* panel = $::getView(@"MY_ID", @"MyController"); //specify viewId & ControllerName to get the view pointer.
+    [panel->view setBackgroundColor:[UIColor redColor]];//change bg color from FFFF00 to red.
+    
+    /* Delete */
+    panel.remove(); //remove from parent. and also memory.
+    
+}
+
+```
 
 ## Usage 
 
