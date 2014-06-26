@@ -47,7 +47,7 @@ using namespace std;
             Mask * v = (Mask*)ges.view;
             NSDictionary *params = [v.data valueForKey:@"gestureData"];
             handler(ges, params);
-            [v.data removeObjectForKey:@"gestureData"];
+            //[v.data removeObjectForKey:@"gestureData"];
         }
     }
 }
@@ -122,22 +122,86 @@ using namespace std;
 
 @end
 
+#pragma mark - SVG
+
+/**
+ get svg path from svg path string.
+ don't forget to release : CGPathRelease(path), after using.
+ */
+CGPathRef SVG::path(const char* svgpathcmd){
+    string svgpath(svgpathcmd);
+    
+    //svgpath = regex_replace(svgpath, regex("\\s*,\\s*"), ",");
+    //svgpath = regex_replace(svgpath, regex("\\s+"), " ");
+    svgpath = regex_replace(svgpath, regex("[\\s+,]"), " ");
+    smatch m;
+    regex e("\\b[MLCSQTAZ]*[\\d\\.]*\\b");
+    vector<SVGPathCmd> cmds;
+    SVGPathCmd cmd=(SVGPathCmd){};
+    int cidx = 0;
+    while (regex_search(svgpath,m,e)) {
+        string o = m[0];
+        char pref = o.at(0);
+        if(pref>='A' && pref<'Z'){//CMD
+            if(cmd.cmd){
+                cmds.push_back(cmd);
+                cmd = {};
+                cidx = 0;
+            }
+            cmd.cmd = pref;
+            cmd.coords[cidx++]=atof(o.substr(1).c_str());
+        }else if(pref=='Z'){//VALUE
+            cmds.push_back(cmd);
+            cmds.push_back({'Z'});
+            break;
+        }else{
+            cmd.coords[cidx++]=atof(o.c_str());
+        }
+        svgpath = m.suffix().str();
+    }
+    
+    CGMutablePathRef path = CGPathCreateMutable();
+    for (auto c : cmds) {
+        switch (c.cmd) {
+            case 'M':
+                CGPathMoveToPoint(path, NULL, c.coords[0], c.coords[1]);
+                break;
+            case 'L':
+                CGPathAddLineToPoint(path, NULL, c.coords[0], c.coords[1]);
+                break;
+            case 'C':
+                CGPathAddCurveToPoint(path, NULL, c.coords[0], c.coords[1], c.coords[2], c.coords[3], c.coords[4], c.coords[5]);
+                break;
+            case 'Q':
+                CGPathAddQuadCurveToPoint(path, NULL, c.coords[0], c.coords[1],c.coords[2], c.coords[3]);
+                break;
+            case 'A':
+                CGPathAddArcToPoint(path, NULL, c.coords[0], c.coords[1], c.coords[2], c.coords[3], c.coords[4]);
+                break;
+            case 'Z':
+                CGPathCloseSubpath(path);
+                break;
+            default:
+                break;
+        }
+    }
+    return path;
+}
+
 #pragma mark - $
 
 
 __attribute__((overloadable)) $::$(){nodes=*new std::vector<$*>();view=nil;}
 __attribute__((overloadable)) $::$(id _src){$();src = _src;}
 __attribute__((overloadable)) $::$(bool scroll){$();scrollable=scroll;}
-
+__attribute__((overloadable)) $::$(const char* path){$();this->svgPath = path;}
 // Constructor
 $::~$(){view=nil;mask=nil;nodes.clear();src=nil;text=nil;textLayer=nil;}
 
-__attribute__((overloadable))
-$& $::setStyle(Styles s){
-    //TODO
+$* $::initView(Styles s){
     styles = s;
     if(!view){
-        CGRect rect =CGRectMake(s.x, s.y, s.w, s.h);
+        CGRect rect =CGRectMake(styles.x, styles.y, styles.w, styles.h);
         if(src!=nil){
             view = [[UIImageView alloc] initWithFrame:rect];
             setImage(src);
@@ -145,25 +209,38 @@ $& $::setStyle(Styles s){
             view = scrollable?[[UIScrollView alloc] initWithFrame:rect]:[[UIView alloc] initWithFrame:rect];
         }
     }
-    
     view.layer.zPosition = styles.z;
+    view.userInteractionEnabled = YES;
+    contentLayer = [CALayer layer];
+    contentLayer.frame = view.layer.bounds;
+    [view.layer addSublayer:contentLayer];
+    return this;
+}
+
+__attribute__((overloadable))
+$& $::setStyle(Styles s){
+    initView(s);
+
+    CALayer *layer = shapeLayer?shapeLayer:contentLayer;
     
-    if(styles.padding){
-        styles.paddingLeft=styles.padding;
-        styles.paddingTop=styles.padding;
-        styles.paddingRight=styles.padding;
-        styles.paddingBottom=styles.padding;
-    }
-    
-    if(styles.border) this->drawBorder(str(styles.border));
+    //self.alpha = styles.alpha;
+    if(src)
+        view.layer.opacity = (1-styles.alpha);
+    else layer.opacity = (1-styles.alpha);
+
     
     if(styles.bgcolor){
         if(strhas(styles.bgcolor, ":")){//gradient
             this->drawGradient(str(styles.bgcolor));
-        }else
-            view.backgroundColor=str2color(styles.bgcolor);
+        }else{
+            if(shapeLayer)
+                shapeLayer.fillColor =str2color(styles.bgcolor).CGColor;
+            else
+                contentLayer.backgroundColor=str2color(styles.bgcolor).CGColor;
+        }
+        
     }
-
+    
     if(styles.shadow){
         NSString *shadow = [str(styles.shadow) regexpReplace:@"  +" replace:@" "];
         if([shadow contains:@","]){
@@ -175,6 +252,16 @@ $& $::setStyle(Styles s){
         }
     }
 
+    if(styles.border) this->drawBorder(str(styles.border));
+    
+    if(styles.padding){
+        styles.paddingLeft=styles.padding;
+        styles.paddingTop=styles.padding;
+        styles.paddingRight=styles.padding;
+        styles.paddingBottom=styles.padding;
+    }
+    
+    
     if(styles.outline){
         this->drawOutline(str(styles.outline));
     }
@@ -223,7 +310,7 @@ $& $::setStyle(Styles s){
             i++;
         }while(end != string::npos);
         
-        CALayer *layer = view.layer;
+        CALayer *layer = contentLayer;
         layer.anchorPoint = CGPointMake(parts[5], parts[6]);
         CATransform3D rt = CATransform3DIdentity;
         rt.m34 = 1.0f / (-1*parts[4]);
@@ -231,10 +318,6 @@ $& $::setStyle(Styles s){
         rt = CATransform3DTranslate(rt, parts[7], parts[8], parts[9]);
         layer.transform = rt;//CATransform3DConcat
     }
-    
-    
-    //self.alpha = styles.alpha;
-    view.layer.opacity = (1-styles.alpha);
     
     return *this;
 }
@@ -272,9 +355,180 @@ $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
 $& $::unbind(NSString* event){
     if(!mask) return *this;
     [mask.gestures removeObjectForKey:event];
+    //mask removeGestureRecognizer:<#(UIGestureRecognizer *)#>
     //FIXME remove event
     return *this;
 }
+
+$& $::dragable(GestureHandler onDrag, GestureHandler onEnd){
+    this->bind(@"pan",^(GR *ges, Dic *params) {
+        UIPanGestureRecognizer * r = (UIPanGestureRecognizer *) ges;
+        Mask*m = r.view;
+        if(r.state == UIGestureRecognizerStateEnded){
+            [m.data removeObjectForKey:@"diffX"];
+            [m.data removeObjectForKey:@"diffY"];
+            onEnd(r,params);
+        }else{
+            CGPoint trans = [r translationInView:view];
+            if(![m.data valueForKey:@"diffX"]){
+                [m.data setValue:@(trans.x-m.owner->view.center.x) forKey:@"diffX"];
+                [m.data setValue:@(trans.y-m.owner->view.center.y) forKey:@"diffY"];
+            }
+            m.owner->view.center = CGPointMake(trans.x-[[m.data valueForKey:@"diffX"] floatValue], trans.y-[[m.data valueForKey:@"diffY"] floatValue]) ;
+            onDrag(r,params);
+        }
+    },@{});
+    return *this;
+}
+
+#pragma mark $ animator
+
+/**
+ 
+ bounds : @[@left, @top, @right, @bottom], all of them are float
+ */
+$& $::startMove(){
+    if(!behaviors || !view.superview)
+        return *this;
+    //you have to init animator out side.
+    if(!animator)
+        animator = [[UIDynamicAnimator alloc] initWithReferenceView:view.superview];    /*
+    for (Str *k in opts) {
+        Str *type = [k stringByReplacingCharactersInRange:NSMakeRange(0,1) withString:[[k substringToIndex:1] uppercaseString]];
+        NSString * className = [NSString stringWithFormat:@"UI%@Behavior",type];
+        UIDynamicBehavior *behavior = [[NSClassFromString(className) alloc] initWithItems:@[view]];
+        [animator addBehavior:behavior];
+    }*/
+    /*
+    if(bounds){
+        if(!dummys) dummys=[[MArr alloc] init];
+        float hh = view.superview.bounds.size.height;
+        float ww = view.superview.bounds.size.width;
+        for (int i=0; i<4; i++) {
+            CGRect wall;
+            float v = [bounds[i] floatValue];
+            switch (i) {
+                case 0:wall = CGRectMake(v, 0, 1, hh);break;
+                case 1:wall = CGRectMake(0, v, ww, 1);break;
+                case 2:wall = CGRectMake(ww-v, 0, 1, hh);break;
+                case 3:wall = CGRectMake(0, hh-v, ww, 1);break;
+            }
+            UIView *dummy = [[UIView alloc] initWithFrame:wall];
+            [dummys addObject:dummy];
+            dummy.backgroundColor = [UIColor redColor];
+            [view.superview addSubview:dummy];
+        }
+    }*/
+    for (id b in behaviors) {
+        [animator addBehavior:b];
+    }
+ 
+    return *this;
+}
+
+/** 
+ Gravity animation
+ opt.angle  -> _.angle in degree, float 0~360
+ opt.speed  -> _.magnitude 1~N float
+ opt.x      -> _.gravityDirection.x float
+ opt.y      -> _.gravityDirection.y float
+ */
+$& $::addGravity(Dic *opt){
+    if(!behaviors) behaviors = [[MArr alloc] init];
+    UIGravityBehavior * b =[[UIGravityBehavior alloc] initWithItems:@[view]];
+    if(opt){
+        if(opt[@"angle"])
+            b.angle = radians([opt[@"angle"] floatValue]);
+        if(opt[@"speed"])
+            b.magnitude = [opt[@"speed"] floatValue];
+        if(opt[@"x"]&&opt[@"y"])
+            b.gravityDirection = CGVectorMake([opt[@"x"] floatValue], [opt[@"y"] floatValue]);
+    }
+    [behaviors addObject:b];
+    return *this;
+}
+
+/*
+ opt.angle  -> (angle) in degree, float 0~360
+ opt.speed  -> (magnitude) 1~N float
+ opt.x : (pushDirection.x) direction targetX
+ opt.y : (pushDirection.y) direction targetY
+ opt.once : (mode), bool, default true
+ */
+$& $::addPush(Dic *opt){
+    if(!behaviors) behaviors = [[MArr alloc] init];
+    UIPushBehaviorMode mode = opt&&opt[@"once"]==@YES ?UIPushBehaviorModeInstantaneous:UIPushBehaviorModeContinuous;
+    UIPushBehavior *b = [[UIPushBehavior alloc] initWithItems:@[view] mode:mode];
+    if(opt[@"angle"])
+        b.angle = radians([opt[@"angle"] floatValue]);
+    if(opt[@"speed"])
+        b.magnitude = [opt[@"speed"] floatValue];
+    if(opt[@"x"]&&opt[@"y"])
+        b.pushDirection = CGVectorMake([opt[@"x"] floatValue], [opt[@"y"] floatValue]);
+    [behaviors addObject:b];
+    return *this;
+}
+/*
+ opt.x : transport target point.x
+ opt.y : transport target point.y
+ opt.damping : (damping) float 0~1, default 0.5
+ */
+$& $::addSnap(Dic *opt){
+    if(!opt[@"x"] || !opt[@"y"])
+        return *this;
+    if(!behaviors) behaviors = [[MArr alloc] init];
+    UISnapBehavior *b = [[UISnapBehavior alloc] initWithItem:view snapToPoint:CGPointMake([opt[@"x"] floatValue], [opt[@"y"] floatValue])];
+    if(opt[@"damping"]) b.damping =[opt[@"damping"] floatValue];
+    [behaviors addObject:b];
+    return *this;
+}
+
+/**
+ set collision bounds of animation
+ opts.points : float array len>=2, @[point0.x,point0.y,point1.x,point1.y...]
+                nil : use animator.target.bounds.
+                len=2 : use p1~p2 rectangle
+                len>2 : use p1~pN polygon
+ opts.svg   : provide path by giving svg path cmd, e.g. "M100 100 L0 200..."
+ opts.mode : (collisionMode) UICollisionBehaviorModeItems|UICollisionBehaviorModeBoundaries|UICollisionBehaviorModeEverything
+ */
+$& $::addCollision(Dic *opt){
+    //if(!view.superview)return *this;
+    if(!behaviors) behaviors = [[MArr alloc] init];
+    
+    UICollisionBehavior *b = [[UICollisionBehavior alloc] initWithItems:@[view]];
+    if(opt){
+        if(opt[@"points"]){
+            int len = [opt[@"points"] count];
+            if(len>4 && len%2==0){
+                CGMutablePathRef path = CGPathCreateMutable();
+                for(int i=0;i<len;i+=2){
+                    CGPathAddLineToPoint(path, NULL, [opt[@"points"][i] floatValue], [opt[@"points"][i+1] floatValue]);
+                }
+                CGPathCloseSubpath(path);
+                [b addBoundaryWithIdentifier:@"polygon" forPath:[UIBezierPath bezierPathWithCGPath:path]];
+                CGPathRelease(path);
+            }else if (len==4){
+                [b addBoundaryWithIdentifier:@"rect"
+                                   fromPoint:CGPointMake([opt[@"points"][0] floatValue], [opt[@"points"][1] floatValue])
+                                     toPoint:CGPointMake([opt[@"points"][2] floatValue], [opt[@"points"][3] floatValue])];
+            }else
+                b.translatesReferenceBoundsIntoBoundary = YES;
+        }else if(opt[@"svg"]){
+            CGPathRef path = SVG::path([opt[@"svg"] UTF8String]);
+            [b addBoundaryWithIdentifier:@"svg" forPath:[UIBezierPath bezierPathWithCGPath:path]];
+            CGPathRelease(path);
+        }
+        if(opt[@"mode"]) b.collisionMode = (UICollisionBehaviorMode)[opt[@"mode"] intValue];
+    }else{
+        b.translatesReferenceBoundsIntoBoundary = YES;
+    }
+    [behaviors addObject:b];
+    return *this;
+}
+
+#pragma mark $ operator
+
 __attribute__((overloadable)) $& $::operator>>($& p){
     if(&p){[p.view addSubview:this->view];parent = &p;p.nodes.push_back(this);}
     return *this;
@@ -305,26 +559,32 @@ void $::del(NSString*key){
 #pragma mark $ drawing
 
 void $::drawBorder(NSString *border){
-    border = [border regexpReplace:@"  +" replace:@" "];
-    NSArray *parts = [border componentsSeparatedByString:@" "];
-    styles.borderWidth =[parts[0] floatValue];
-    view.layer.borderWidth =styles.borderWidth;
-    if([parts count]>1){
-        NSString *cl = parts[1];
-        if([cl contains:@","]||[cl contains:@"#"]){//color
-            view.layer.borderColor = [cl colorValue].CGColor;
-        }else{//image
-            view.layer.borderColor = [UIColor colorWithPatternImage:[UIImage imageNamed:cl]].CGColor;
-        }
-        //radius
-        if([parts count]>2){
-            int rd = [parts[2] intValue];
-            if(rd>0) {
-                styles.cornerRadius = rd;
-                view.layer.cornerRadius = rd;
-                view.layer.masksToBounds=YES;
+    if(border){
+        border = [border regexpReplace:@"  +" replace:@" "];
+        NSArray *parts = [border componentsSeparatedByString:@" "];
+        styles.borderWidth =[parts[0] floatValue];
+        if([parts count]>1){
+            styles.borderColor = cstr(parts[1]);
+            //radius
+            if([parts count]>2){
+                styles.cornerRadius = [parts[2] intValue];
             }
         }
+    }
+    if(!shapeLayer){ //drawing
+        contentLayer.borderWidth =styles.borderWidth;
+        if(strhas(styles.borderColor, "#")||strhas(styles.borderColor, ",")){//color
+            contentLayer.borderColor = str2color(styles.borderColor).CGColor;
+        }else{//image
+            contentLayer.borderColor = [UIColor colorWithPatternImage:[UIImage imageNamed:str(styles.borderColor)]].CGColor;
+        }
+        if(styles.cornerRadius>0) { //radius
+            contentLayer.cornerRadius = styles.cornerRadius;
+            contentLayer.masksToBounds=YES;
+        }
+    }else{
+        shapeLayer.strokeColor=str2color(styles.borderColor).CGColor;
+        shapeLayer.lineWidth=styles.borderWidth;
     }
 
 }
@@ -339,7 +599,7 @@ void $::drawShadow(NSString* shadow){
     
     NSArray *parts = [shadow componentsSeparatedByString:@" "];
     int psize =(int)[parts count];
-    
+    CALayer *layer = shapeLayer?shapeLayer:contentLayer;
     if(psize>=4){
         BOOL isInner = [parts[0] isEqualToString:@"inset"];
         
@@ -350,7 +610,8 @@ void $::drawShadow(NSString* shadow){
         UIColor * cl = ([parts count] >= 4+offset)? [parts[3+offset] colorValue]:[UIColor darkGrayColor];
         
         view.clipsToBounds = NO;
-        
+       
+
         if(isInner){
             //_innerShadow = [[InnerShadow alloc] initWithTarget:self x:x y:y r:r];
             CALayer * s = [CALayer layer];
@@ -367,7 +628,7 @@ void $::drawShadow(NSString* shadow){
             */
             
             float ww = styles.borderWidth?styles.borderWidth+o:o;
-            s.frame = CGRectMake(ww-x, ww-y, view.bounds.size.width-2*ww+2*x, view.bounds.size.height-2*ww+2*y);
+            s.frame = CGRectMake(ww-x, ww-y, contentLayer.bounds.size.width-2*ww+2*x, contentLayer.bounds.size.height-2*ww+2*y);
             s.cornerRadius = styles.cornerRadius>ww ? styles.cornerRadius-ww : 0;
             s.borderWidth = MAX(x, y);
             s.borderColor = [UIColor colorWithWhite:1 alpha:1].CGColor;
@@ -376,22 +637,23 @@ void $::drawShadow(NSString* shadow){
             s.shadowOpacity = 0.7;
             s.shadowColor = cl.CGColor;
             s.masksToBounds = YES;
-            [view.layer addSublayer:s];
+            
+            [layer addSublayer:s];
             s = nil;
         }else{
-            view.layer.shadowOffset = CGSizeMake(x, y);
-            view.layer.shadowRadius = r;
-            view.layer.shadowColor = cl.CGColor;
+            layer.shadowOffset = CGSizeMake(x, y);
+            layer.shadowRadius = r;
+            layer.shadowColor = cl.CGColor;
             //!!! layer.shadowOpacity is very slow sometime and use much more memory
             //self.layer.shadowOpacity = [parts count]>4? [parts[5] floatValue]:0.7;
-            view.layer.shadowOpacity = 0.7;
+            layer.shadowOpacity = 0.7;
         }
         cl = nil;
     }else{
-        view.layer.shadowOffset = CGSizeZero;
-        view.layer.shadowRadius = 0;
-        view.layer.shadowColor = [UIColor clearColor].CGColor;
-        view.layer.shadowOpacity = 0;
+        layer.shadowOffset = CGSizeZero;
+        layer.shadowRadius = 0;
+        layer.shadowColor = [UIColor clearColor].CGColor;
+        layer.shadowOpacity = 0;
     }
     parts = nil;
     
@@ -399,7 +661,8 @@ void $::drawShadow(NSString* shadow){
 
 void $::drawGradient(NSString *value){
     CAGradientLayer *gradient = [CAGradientLayer layer];
-    gradient.frame = view.bounds;
+    CALayer *layer = shapeLayer?shapeLayer:contentLayer;
+    gradient.frame = layer.bounds;
     gradient.cornerRadius = styles.cornerRadius;
     
     value = [value regexpReplace:@"  +" replace:@" "];
@@ -421,7 +684,8 @@ void $::drawGradient(NSString *value){
     }
     gradient.colors = colors;
     gradient.locations = locations;
-    [view.layer insertSublayer:gradient atIndex:0];
+    
+    [layer insertSublayer:gradient atIndex:0];
 }
 
 void $::drawOutline(NSString * outline){
@@ -445,15 +709,41 @@ void $::drawOutline(NSString * outline){
         
     CALayer *olayer = [CALayer layer];
     olayer.frame = CGRectMake(-1*w, -1*w,
-                              view.frame.size.width+2*w, view.frame.size.height+2*w);
+                              contentLayer.frame.size.width+2*w, contentLayer.frame.size.height+2*w);
     
     olayer.borderWidth = styles.outlineWidth;
     olayer.borderColor = oColor.CGColor;
     olayer.cornerRadius = styles.cornerRadius>0? styles.cornerRadius+styles.outlineSpace : 0;
     
-    [view.layer addSublayer:olayer];
+    [contentLayer addSublayer:olayer];
     olayer = nil;oColor = nil;
 }
+
+#pragma mark $ svg
+
+/*
+ draw svg path to view.
+ H V S T are unsupported
+ */
+void $::drawSvgPath (const char* svgpathcmd){
+    using namespace std;
+    CGPathRef path = SVG::path(svgpathcmd);
+    
+    if(shapeLayer){
+        [shapeLayer removeFromSuperlayer];
+        shapeLayer=nil;
+    }
+    
+    shapeLayer = [CAShapeLayer layer];
+    shapeLayer.frame = CGRectMake(0, 0, contentLayer.frame.size.width,contentLayer.frame.size.height);
+    shapeLayer.path = path;
+    
+    CGPathRelease(path);
+    
+    this->setStyle(this->styles);
+    [contentLayer addSublayer:shapeLayer];
+}
+
 
 #pragma mark $ scroll
 void $::setContentSize(float x, float y){
@@ -497,7 +787,7 @@ $& $::setText(NSString * _text){
     // - (void)sizeToFit //auto adjust super view to fit its all subviews
     
     
-    CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, view.bounds.size.width-styles.paddingLeft-styles.paddingRight, view.bounds.size.height-styles.paddingTop-styles.paddingBottom);
+    CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
     
     //logRect(@"txt",rect);
     if(textLayer==nil)
@@ -512,7 +802,8 @@ $& $::setText(NSString * _text){
     [textLayer setString:text];
     [textLayer setBackgroundColor:[UIColor clearColor].CGColor];
     
-    this->setFont(styles.font);
+    if(styles.font)
+        this->setFont(styles.font);
     
     if(styles.fontSize>0)
         this->setFontSize(styles.fontSize);
@@ -522,7 +813,7 @@ $& $::setText(NSString * _text){
     
     this->setTextAlign(str(styles.textAlign));
     
-    [view.layer addSublayer:textLayer];
+    [contentLayer addSublayer:textLayer];
     return *this;
 }
 
@@ -566,6 +857,7 @@ void $::setFont(char* font){
     }
 }
 
+
 __attribute__((overloadable)) void $::setColor(id color){
     if(textLayer==nil)
         textLayer= [[CATextLayer alloc] init];
@@ -596,7 +888,7 @@ void $::setFontSize(float s){
     if(s>0)
         [textLayer setFontSize:s];
     else{
-        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, view.bounds.size.width-styles.paddingLeft-styles.paddingRight, view.bounds.size.height-styles.paddingTop-styles.paddingBottom);
+        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
         NSString *fontName = styles.fontName? str(styles.fontName):@"Helvetica";
         int fontSize = ![text isEqual:[NSNull null]] ? [text sizeToFit:rect.size font:fontName] : 14;
         [textLayer setFontSize:fontSize];
@@ -606,7 +898,7 @@ void $::setFontSize(float s){
 void $::setEditable(BOOL editable){
     styles.editable = editable;
     if(mask.textField==nil){
-        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, view.bounds.size.width-styles.paddingLeft-styles.paddingRight, view.bounds.size.height-styles.paddingTop-styles.paddingBottom);
+        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
         
         NSDictionary * orgs = @{};//FIXME : check styles.mm
         
@@ -647,6 +939,7 @@ void $::setEditable(BOOL editable){
 }
 
 
+
 #pragma mark - CPP wrapper
 __attribute__((overloadable)) $& box(){return *(new $());}
 __attribute__((overloadable)) $& box(Styles s){return (new $())->setStyle(s);}
@@ -674,9 +967,18 @@ __attribute__((overloadable)) $& img(id src){return *(new $(src));}
 __attribute__((overloadable)) $& img(id src, Styles s){return (new $(src))->setStyle(s);};
 __attribute__((overloadable)) $& img(id src, Styles *sp){return (new $(src))->setStyle(*sp);};
 __attribute__((overloadable)) $& img(id src, Styles s,Styles *sp){return (new $(src))->setStyle(style(&s,sp));};
-
 __attribute__((overloadable)) $& img(id src, std::initializer_list<Styles *>ext){return (new $(src))->setStyle({},ext);};
 __attribute__((overloadable)) $& img(id src, Styles s, std::initializer_list<Styles *>ext){return (new $(src))->setStyle(s,ext);};
+
+
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s){
+    $* o=(new $())->initView(s);o->drawSvgPath([cmds UTF8String]);return *o;
+}
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles *sp){$& o=(new $())->setStyle(*sp);o.drawSvgPath([cmds UTF8String]);return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, Styles *sp){$& o=(new $())->setStyle(style(&s,sp));o.drawSvgPath([cmds UTF8String]);return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, std::initializer_list<Styles *>ext){$& o=(new $())->setStyle({},ext);o.drawSvgPath([cmds UTF8String]);return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, std::initializer_list<Styles *>ext){$& o=(new $())->setStyle(s,ext);o.drawSvgPath([cmds UTF8String]);return o;}
+
 
 __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles listStyle){
     return list(data, handler, listStyle, {});
@@ -717,7 +1019,7 @@ __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handl
 NSString * str(char * cs){return cs!=nil?[NSString stringWithFormat:@"%s",cs]:nil;}
 
 char * cstr(NSString * cs){
-    return (char*)[cs UTF8String];
+    return const_cast<char*>([cs UTF8String]);
 }
 
 UIColor * str2color(char * s){
@@ -801,7 +1103,7 @@ char * strs(int num, char* s ,...){
     return cstr;
 }
 
-Styles style(Styles *custom, Styles *ext){
+__attribute__((overloadable)) Styles style(Styles *custom, Styles *ext){
     
     if(!ext) return *custom;
     
@@ -815,6 +1117,7 @@ Styles style(Styles *custom, Styles *ext){
     
     if(sc.border) ss.border = sc.border;
     if(sc.borderWidth) ss.borderWidth = sc.borderWidth;
+    if(sc.borderColor) ss.borderColor = sc.borderColor;
     if(sc.cornerRadius) ss.cornerRadius = sc.cornerRadius;
     
     if(sc.outlineColor) ss.outlineColor = sc.outlineColor;
@@ -852,6 +1155,14 @@ Styles style(Styles *custom, Styles *ext){
     *custom = ss;
     return ss;
 }
+__attribute__((overloadable)) Styles style(Styles *custom, std::initializer_list<Styles *>exts){
+    Styles o = *custom;
+    for (Styles *ext  : exts) {
+        style(&o,ext);
+    }
+    return o;
+}
+
 Styles str2style(char * s){
     string cs(s);
     regex_replace(cs, regex("\\s*;\\s*"), "");
@@ -879,6 +1190,7 @@ Styles str2style(char * s){
             
             if(k=="border") s0.border = v;
             if(k=="borderWidth") s0.borderWidth = atof(v);
+            if(k=="borderColor") s0.borderColor = v;
             
             if(k=="cornerRadius") s0.cornerRadius = atoi(v);
             if(k=="outlineColor") s0.outlineColor = v;
@@ -917,3 +1229,6 @@ Styles str2style(char * s){
     }while(end != string::npos);
     return s0;
 }
+
+
+#pragma mark - opengl

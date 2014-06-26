@@ -638,6 +638,7 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
 
 -(void)drawPoints:(float[])points size:(int)size
         fillColor:(UIColor*)fillColor strokeColor:(UIColor*)strokeColor strokeWidth:(float)strokeWidth{
+    
     CGContextRef context =UIGraphicsGetCurrentContext();
     
     CGContextSetAllowsAntialiasing(context, YES);

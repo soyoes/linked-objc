@@ -1,8 +1,9 @@
 //
 //  Categories.h
+//  liberobjc
 //
 //  Created by @soyoes on 10/30/12.
-//  Copyright (c) 2012 Liberhood. All rights reserved.
+//  Copyright (c) 2012 Liberhood ltd. All rights reserved.
 //
 
 

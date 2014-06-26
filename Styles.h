@@ -1,10 +1,22 @@
 //
 //  styles.h
-//  testcpp
+//  liberobjc
 //
 //  Created by soyoes on 6/14/14.
 //  Copyright (c) 2014 Liberhood ltd. All rights reserved.
 //
+
+#ifndef LIBEROBJC_SHORTCUT_NAMES
+#define LIBEROBJC_SHORTCUT_NAMES
+    typedef UIGestureRecognizer GR;
+    typedef NSDictionary Dic;
+    typedef NSMutableDictionary MDic;
+    typedef NSArray Arr;
+    typedef NSMutableArray MArr;
+    typedef NSString Str;
+    typedef NSMutableString MStr;
+#endif
+
 #ifndef STYLES_H
 #define STYLES_H
 
@@ -32,24 +44,27 @@ typedef struct{
     char *  color;
     //color: text color
     //color format @see bgcolor,
-    
-    
+    char *  shadow;
+    //format : x y radius colorStr opacity
     char *  border;
             //format :width color/image corner-radius
             //format(use image) : 1 myline.png 4        //dash|dot ...
             //format(use rgbcolor) : 1 213,204,222
             //format(use hexcolor) : 1 #CCFF33 2
-    float   borderWidth;
-    float   cornerRadius;
-    
-    char *  outline, *outlineColor;
-    float   outlineSpace,
-            outlineWidth;
+    char *  outline;
             //format: width space color ...  1 1 #333333
-    char *  shadow;
-            //format : x y radius colorStr opacity
     float   alpha;
             //0~1   0.0f:opacity=1, 1.0f:opacity=0
+    
+    float   borderWidth;
+    char *  borderColor;
+    float   cornerRadius;
+            //@see border
+    
+    char *  outlineColor;
+    float   outlineSpace,
+            outlineWidth;
+            //@see outline
     
     float   scaleX, scaleY;//<0.00 & <x
     float   rotate;
@@ -82,6 +97,8 @@ typedef struct{
             //format : true, if clicked, add dynamical textfield automatically
     char *  placeHolder;
             //=css placeholder
+    
+
 }Styles;
 
 #endif

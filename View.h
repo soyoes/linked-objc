@@ -7,6 +7,9 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#include <OpenGLES/EAGL.h>
+#include <OpenGLES/ES1/gl.h>
+#include <OpenGLES/ES1/glext.h>
 #import "Styles.h"
 //#include <map>
 //#include <vector>
@@ -14,23 +17,27 @@
 
 #define radians(degrees) (degrees * M_PI/180)
 #define _events @[@"tap", @"pinch", @"rotation", @"swipe", @"pan", @"longpress"]
+#define _rootController [UIApplication sharedApplication].keyWindow.rootViewController 
 
-#ifndef VIEW_H   
+#ifndef VIEW_H
 #define VIEW_H
-
-typedef void(^GestureHandler)(UIGestureRecognizer*, NSDictionary*);
-/*
-@interface View : UIScrollView
-@property (nonatomic) CGRect contentRect;
-@property  CAShapeLayer *content;
--(id)initWithStyle:(Styles)s;
-- (void) set:(NSString*)keyPath value:(id)value;
-- (id) get:(NSString*)keyPath;
-- (void) del:(NSString*)keyPath;
-@end
- */
-
 @class Mask;
+
+typedef void(^GestureHandler)(GR*, Dic*);
+
+typedef struct{
+    char cmd;
+    float coords[6];
+}SVGPathCmd;
+
+
+#pragma mark - SVG
+
+class SVG{
+public :
+    static CGPathRef path(const char* pathcmd);
+};
+
 
 #pragma mark - $
 
@@ -38,8 +45,13 @@ class ${
 public:
     UIView  * view;
     Mask    * mask;
+    CALayer * contentLayer;
+    CAShapeLayer * shapeLayer;
     CATextLayer *textLayer;
     NSString * text;
+    UIDynamicAnimator * animator;
+    NSMutableArray * behaviors;
+    NSMutableArray * dummys;
     id src;
     bool scrollable;
     
@@ -49,15 +61,35 @@ public:
     __attribute__((overloadable)) $();
     __attribute__((overloadable)) $(id src); //for image only
     __attribute__((overloadable)) $(bool scoll); //for scroll only
+    __attribute__((overloadable)) $(const char* svgPath); //for svgpath only
+    
     // Constructor
     ~$();
     
-    __attribute__((overloadable)) $& setStyle(Styles s);
-    //__attribute__((overloadable)) $* setStyle(Styles s, Styles*ext);
-    __attribute__((overloadable)) $& setStyle(Styles s, std::initializer_list<Styles *>ext);
+    $* initView(Styles s);
+    
+    __attribute__((overloadable))
+    $& setStyle(Styles s);
+    __attribute__((overloadable))
+    $& setStyle(Styles s, std::initializer_list<Styles *>ext);
     
     $& bind(NSString* event, GestureHandler handler, NSDictionary * opts);
     $& unbind(NSString* event);
+    $& dragable(GestureHandler onDrag, GestureHandler onEnd); //shortcut of this->bind(@"pan",...)
+    
+    
+    
+    $& addGravity(Dic *opt);
+    $& addPush(Dic *opt);
+    $& addSnap(Dic *opt);
+    $& addCollision(Dic *opt);
+    $& startMove();
+    //$& addBounds(Dic *opt);
+    //TODO $& addAttachment();
+    //TODO $& addCollision();
+    //TODO $&
+    //TODO remove ...
+    
     __attribute__((overloadable)) $& operator>>($&p);
     __attribute__((overloadable)) $& operator>>(UIView *p);
     __attribute__((overloadable)) $& operator<<($&p);
@@ -69,7 +101,13 @@ public:
     void drawShadow(NSString*shadow);
     void drawOutline(NSString*outline);
     void drawGradient(NSString *value);
+    
     void drawBorder(NSString *border);
+    
+
+    //H V S T are unsupported
+    void drawSvgPath (const char* svgpathcmd);
+    
     
     $& setImage(id src);
     UIImage * getImage();
@@ -84,10 +122,11 @@ public:
     void setEditable(BOOL editable);
     
     void setContentSize(float x, float y);
-    
+        
     //operators
 private:
     Styles styles;
+    const char* svgPath;
 };
 
 typedef $ View;
@@ -131,12 +170,21 @@ __attribute__((overloadable)) $& img(id src, Styles s, Styles* sp);
 __attribute__((overloadable)) $& img(id src, std::initializer_list<Styles *>ext);
 __attribute__((overloadable)) $& img(id src, Styles s, std::initializer_list<Styles *>ext);
 
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s);
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles* sp);
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, Styles* sp);
+__attribute__((overloadable)) $& svgp(NSString* cmds, std::initializer_list<Styles *>ext);
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, std::initializer_list<Styles *>ext);
+
+
+
 typedef $&(^ListHandler)(id, int);
 __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles listStyle);
 __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles listStyle, std::initializer_list<Styles *>ext);
 typedef $&(^GridHandler)(id, int, int);
 __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handler, Styles gridsStyle);
 __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handler, Styles gridsStyle, std::initializer_list<Styles *>ext);
+
 
 #pragma mark - CPP
 
@@ -155,6 +203,12 @@ char * f2str(float f);
 char * strs(int num, char* s ,...);
 
 Styles str2style(char * s);
-Styles style(Styles *custom, Styles *ext);
+__attribute__((overloadable)) Styles style(Styles *custom, Styles *ext);
+__attribute__((overloadable)) Styles style(Styles *custom, std::initializer_list<Styles *>exts);
+
+
+
+#pragma mark - OpenGL
+
 
 #endif
