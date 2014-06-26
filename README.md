@@ -136,7 +136,7 @@ you can add this also.
 ```
 
 
-## Draw Label and text
+## Draw Text and Remote Text
 
 ```objective-c
 - (void)viewDidLoad
@@ -155,18 +155,31 @@ you can add this also.
          .editable=YES     //optional,with this option use can edit the text inside.
          }) 
          >> self.view;
+
+   /* lazy loading text string from remote server */
+   glabel(@"http://ip.jsontest.com", ^NSString*(id res) {
+         return id[@"ip"];                //this will be set after loading
+      },{.w=200,.h=44,.color="#000000"})
+      .setDefaultText(@"Loading"); //this will be shown as default/loading message.
 }
 
 ```
 
-## Draw Image
+## Draw Image & Lazy loading
 
 ```objective-c
 - (void)viewDidLoad
 {
     [super viewDidLoad];  
-    /* draw an image and flip horizontal (flip will be changed later)*/
-    img(@"myimg.png",{.w=300,.h=200,.flip="H"}) >> self.view;
+    /* draw an image and flip horizontal */
+    img(@"myimg.png",{.w=300,.h=200,.flipX=true}) >> self.view;
+
+    /* lazy loading an image from remote server */
+    img(@"http://dummyimage.com/600x400/000/fff",{.w=300,.h=200,.flip="H"}) >> self.view;
+
+    /* lazy loading an image from ALAssetLibrary with url */
+    img(@"assets-library://YOUR_LIB_FILE_URL",{.w=300,.h=200,.flip="H"}) >> self.view;
+
 }
 
 ```
