@@ -10,10 +10,10 @@
 #include <OpenGLES/EAGL.h>
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>
+
 #import "Styles.h"
-//#include <map>
-//#include <vector>
-//#include <initializer_list>
+#import "HTTPRequest.h"
+#include <initializer_list>
 
 #define radians(degrees) (degrees * M_PI/180)
 #define _events @[@"tap", @"pinch", @"rotation", @"swipe", @"pan", @"longpress"]
@@ -45,6 +45,7 @@ class ${
 public:
     UIView  * view;
     Mask    * mask;
+    NSString * ID;
     CALayer * contentLayer;
     CAShapeLayer * shapeLayer;
     CATextLayer *textLayer;
@@ -56,7 +57,7 @@ public:
     bool scrollable;
     
     $* parent;
-    std::vector<$*> nodes;
+    NSMutableArray * nodes;
     
     __attribute__((overloadable)) $();
     __attribute__((overloadable)) $(id src); //for image only
@@ -77,8 +78,6 @@ public:
     $& unbind(NSString* event);
     $& dragable(GestureHandler onDrag, GestureHandler onEnd); //shortcut of this->bind(@"pan",...)
     
-    
-    
     $& addGravity(Dic *opt);
     $& addPush(Dic *opt);
     $& addSnap(Dic *opt);
@@ -90,9 +89,12 @@ public:
     //TODO $&
     //TODO remove ...
     
-    __attribute__((overloadable)) $& operator>>($&p);
-    __attribute__((overloadable)) $& operator>>(UIView *p);
-    __attribute__((overloadable)) $& operator<<($&p);
+    __attribute__((overloadable)) $& operator>>($&p);   //insert into super
+    __attribute__((overloadable)) $& operator>>(UIView *p); //insert into super
+    __attribute__((overloadable)) $& operator<<($&p); // append child
+    $* operator[](int idx);//get child
+    
+    CGRect rect();
     
     id get(NSString*key);
     void set(NSString*key, id value);
@@ -113,6 +115,7 @@ public:
     UIImage * getImage();
     
     $& setText(NSString * _text);
+    $& setDefaultText(NSString * _text);
     void setTextAlign(NSString* align);
     void setFont(char* font);
     __attribute__((overloadable)) void setColor(id color);
@@ -122,11 +125,26 @@ public:
     void setEditable(BOOL editable);
     
     void setContentSize(float x, float y);
-        
+    
+    
+    static NSMutableDictionary * s_views;
+    static NSString * s_controllerName;
+    static int s_views_idx;
+    
+    static $* getView(NSString * ID, NSString *ctrlerName);
+    static void clearAll(NSString * controllerName);
+    static void setControllerName(NSString *controllerName);
+    
+    void remove();
+    
     //operators
 private:
     Styles styles;
     const char* svgPath;
+    static void registerView($* vp);
+    
+    bool released;
+    
 };
 
 typedef $ View;
@@ -144,6 +162,9 @@ typedef $ View;
 @end
 
 #pragma mark - CPP wrapper
+
+typedef void(^RemoteContentsHandler)(id,Dic*);
+typedef void(^RemoteContentsLoader)($&, RemoteContentsHandler);
 
 __attribute__((overloadable)) $& box();
 __attribute__((overloadable)) $& box(Styles s);
@@ -170,6 +191,15 @@ __attribute__((overloadable)) $& img(id src, Styles s, Styles* sp);
 __attribute__((overloadable)) $& img(id src, std::initializer_list<Styles *>ext);
 __attribute__((overloadable)) $& img(id src, Styles s, std::initializer_list<Styles *>ext);
 
+typedef NSString*(^LabelContentHandler)(id);
+/**
+ label with remote text 
+ @param handler: extract text(NSString*) from response data.
+ */
+__attribute__((overloadable)) $& glabel(NSString*url,LabelContentHandler handler,Styles s);
+__attribute__((overloadable)) $& glabel(NSString*url,LabelContentHandler handler,Styles *sp);
+__attribute__((overloadable)) $& glabel(NSString*url,LabelContentHandler handler,Styles s, Styles *sp);
+
 __attribute__((overloadable)) $& svgp(NSString* cmds, Styles s);
 __attribute__((overloadable)) $& svgp(NSString* cmds, Styles* sp);
 __attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, Styles* sp);
@@ -194,6 +224,8 @@ char * cstr(NSString * cs);
 UIColor * str2color(char * s);
 
 //char** split(char *s,const char* delim);
+
+void memuse(const char* msg);
 
 bool strstarts(char* s1, const char* s2);
 bool strends(char* s1, const char* s2);

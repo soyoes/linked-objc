@@ -8,7 +8,6 @@
 
 #import "Styles.h"
 #include <math.h>
-#include <vector>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -19,6 +18,10 @@
 #import "View.h"
 #import <objc/runtime.h>
 #import <QuartzCore/QuartzCore.h>
+#import <mach/mach.h>
+#import <mach/mach_host.h>
+
+
 using namespace std;
 
 #pragma mark - Mask
@@ -48,6 +51,7 @@ using namespace std;
             NSDictionary *params = [v.data valueForKey:@"gestureData"];
             handler(ges, params);
             //[v.data removeObjectForKey:@"gestureData"];
+            params=nil;
         }
     }
 }
@@ -191,12 +195,32 @@ CGPathRef SVG::path(const char* svgpathcmd){
 #pragma mark - $
 
 
-__attribute__((overloadable)) $::$(){nodes=*new std::vector<$*>();view=nil;}
-__attribute__((overloadable)) $::$(id _src){$();src = _src;}
-__attribute__((overloadable)) $::$(bool scroll){$();scrollable=scroll;}
-__attribute__((overloadable)) $::$(const char* path){$();this->svgPath = path;}
+__attribute__((overloadable)) $::$(){}
+__attribute__((overloadable)) $::$(id _src):src(_src){}
+__attribute__((overloadable)) $::$(bool scroll):scrollable(scroll){}
+__attribute__((overloadable)) $::$(const char* path):svgPath(path){}
 // Constructor
-$::~$(){view=nil;mask=nil;nodes.clear();src=nil;text=nil;textLayer=nil;}
+$::~$(){
+    if(ID && !released){
+//        NSLog(@"Free view : %@",ID);
+        nodes=nil;
+        view=nil;
+        if(mask){
+            if(mask.data)[mask.data removeAllObjects];
+            mask=nil;
+        }
+        src=nil;
+        text=nil;
+        textLayer=nil;
+        contentLayer=nil;
+        shapeLayer=nil;
+        animator =nil;
+        behaviors=nil;
+        dummys=nil;
+        ID=nil;
+        released=true;
+    }
+}
 
 $* $::initView(Styles s){
     styles = s;
@@ -204,7 +228,7 @@ $* $::initView(Styles s){
         CGRect rect =CGRectMake(styles.x, styles.y, styles.w, styles.h);
         if(src!=nil){
             view = [[UIImageView alloc] initWithFrame:rect];
-            setImage(src);
+            //set Image at this time will lead the rendering slow
         }else{
             view = scrollable?[[UIScrollView alloc] initWithFrame:rect]:[[UIView alloc] initWithFrame:rect];
         }
@@ -214,6 +238,8 @@ $* $::initView(Styles s){
     contentLayer = [CALayer layer];
     contentLayer.frame = view.layer.bounds;
     [view.layer addSublayer:contentLayer];
+    if(styles.ID)ID = styles.ID;
+    registerView(this);
     return this;
 }
 
@@ -381,6 +407,16 @@ $& $::dragable(GestureHandler onDrag, GestureHandler onEnd){
     return *this;
 }
 
+CGRect $::rect(){
+    return CGRectMake(styles.x, styles.y, styles.w, styles.h);
+}
+
+void $::remove(){
+    if(mask)[mask removeFromSuperview];
+    if(view)[view removeFromSuperview];
+    delete this;
+}
+
 #pragma mark $ animator
 
 /**
@@ -392,7 +428,8 @@ $& $::startMove(){
         return *this;
     //you have to init animator out side.
     if(!animator)
-        animator = [[UIDynamicAnimator alloc] initWithReferenceView:view.superview];    /*
+        animator = [[UIDynamicAnimator alloc] initWithReferenceView:view.superview];
+    /*
     for (Str *k in opts) {
         Str *type = [k stringByReplacingCharactersInRange:NSMakeRange(0,1) withString:[[k substringToIndex:1] uppercaseString]];
         NSString * className = [NSString stringWithFormat:@"UI%@Behavior",type];
@@ -468,6 +505,7 @@ $& $::addPush(Dic *opt){
     [behaviors addObject:b];
     return *this;
 }
+
 /*
  opt.x : transport target point.x
  opt.y : transport target point.y
@@ -483,7 +521,7 @@ $& $::addSnap(Dic *opt){
     return *this;
 }
 
-/**
+/*
  set collision bounds of animation
  opts.points : float array len>=2, @[point0.x,point0.y,point1.x,point1.y...]
                 nil : use animator.target.bounds.
@@ -530,18 +568,31 @@ $& $::addCollision(Dic *opt){
 #pragma mark $ operator
 
 __attribute__((overloadable)) $& $::operator>>($& p){
-    if(&p){[p.view addSubview:this->view];parent = &p;p.nodes.push_back(this);}
+    if(&p){
+        [p.view addSubview:this->view];
+        if(src)setImage(src);
+        parent = &p;
+        if(!p.nodes)p.nodes = [[NSMutableArray alloc] init];
+        [p.nodes addObject:[NSValue valueWithPointer:this]];
+    }
     return *this;
 }
 __attribute__((overloadable)) $& $::operator>>(UIView*p){
-    if(p){[p addSubview:this->view];}
+    if(p){[p addSubview:this->view];if(src)setImage(src);}
     return *this;
 }
 __attribute__((overloadable)) $& $::operator<<($& p){
-    if(&p){[view addSubview:p.view];p.parent = this;nodes.push_back(&p);}
+    //if(&p){[view addSubview:p.view];if(p)p.parent = this;nodes.push_back(&p);}
+    p >> *this;
     return *this;
 }
 
+$* $::operator[](int idx){
+    if(nodes && [nodes count]>idx){
+        return ($*)[[nodes objectAtIndex:idx] pointerValue];
+    }
+    return NULL;
+}
 
 #pragma mark $ data
 
@@ -756,19 +807,48 @@ void $::setContentSize(float x, float y){
 #pragma mark $ image
 
 $& $::setImage(id _src){
-    if(!src || !_src)return *this;//much init with img()
-    src=_src;
+    if(!_src || ([_src isKindOfClass:[NSString class]]&&[_src length]==0))
+        return *this;//much init with img()
     UIImage* img;
-    if([src isKindOfClass:[NSString class]])
-        img = [UIImage imageNamed:src];
-    else if([src isKindOfClass:[UIImage class]])
-        img = src;
-    if(img)
+    if([_src isKindOfClass:[NSString class]]){
+        if([_src hasPrefix:@"http:"]||[_src hasPrefix:@"https:"]||[_src hasPrefix:@"ftp:"]){//URL
+            src = _src;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSError* error = nil;
+                NSData* data = [NSData dataWithContentsOfURL:[NSURL URLWithString:src] options:NSDataReadingUncached error:&error];
+                if(data&&!error){
+                    [((UIImageView*)this->view) setImage:[UIImage imageWithData:data]];
+                }else{
+                    NSLog(@"Failed To Load Image From URL:%@",src);
+                }
+                src = nil;
+            });
+        }else if([_src hasPrefix:@"assets-library:"]){//asset
+            dispatch_async(dispatch_get_main_queue(), ^{
+                src = _src;
+                @autoreleasepool {
+                    [UIImage loadImageFromAssetURL:[NSURL URLWithString:src] handler:^(UIImage *im,NSDictionary *p) {
+                        this->setImage(im);
+                        im = nil;
+                    } params:@{}];
+                }
+            });
+        }else if([_src length]>0)
+            img = [UIImage imageNamed:_src];
+    }else if([_src isKindOfClass:[UIImage class]])
+        img = _src;
+    if(img){
         [((UIImageView*)view) setImage:img];
+        if(styles.contentMode>=0&&styles.contentMode<=UIViewContentModeBottomRight)
+            this->view.contentMode = styles.contentMode;
+        src=nil;
+    }
+    img = nil;
+    
     return *this;
 }
 UIImage * $::getImage(){
-    if(src){
+    if(view && [view isKindOfClass:[UIImageView class]]){
         return ((UIImageView*)view).image;
     }
     return nil;
@@ -814,6 +894,14 @@ $& $::setText(NSString * _text){
     this->setTextAlign(str(styles.textAlign));
     
     [contentLayer addSublayer:textLayer];
+    return *this;
+}
+
+$& $::setDefaultText(NSString * _text){
+    if(!text){
+        setText(_text);
+        text = nil;
+    }
     return *this;
 }
 
@@ -938,17 +1026,67 @@ void $::setEditable(BOOL editable){
     },nil);
 }
 
+#pragma mark - Static
+NSMutableDictionary * $::s_views = nil;
+NSString * $::s_controllerName = nil;
+int $::s_views_idx = 0;
+/*
+ get view by ID
+ */
+$* $::getView(NSString * _ID, NSString *ctrlerName){
+    //NSString * cName = __controllerName?__controllerName:@"__DEFAULT__";
+    if(s_views && s_views[ctrlerName])
+        for (NSValue *va in s_views[ctrlerName]) {
+            $* v = ($*)[va pointerValue];
+            if([_ID isEqualToString: v->ID]){
+                return v;
+            }
+        }
+    return nullptr;
+}
+/*
+ remove all views from memory.
+ be careful to use this.
+ */
+void $::clearAll(NSString *ctrlerName){
+    if(s_views && s_views[ctrlerName]){
+        for (NSValue *va in s_views[ctrlerName]) {
+            $* v = ($*)[va pointerValue];
+            if(v && v->ID && !v->released)delete(v);
+        }
+        [s_views[ctrlerName] removeAllObjects];
+    }
+}
+    
+void $::setControllerName(NSString *controllerName){
+    s_controllerName = controllerName;
+}
+    
+void $::registerView($* vp){
+    if(!s_views){
+        s_views = [[NSMutableDictionary alloc] init];
+    }
+    NSString * cName = s_controllerName?s_controllerName:@"__DEFAULT__";
+    if(!s_views[cName])
+        s_views[cName] = [[NSMutableArray alloc] init];
+    s_views_idx++;
+    if(!vp->ID)vp->ID = [NSString stringWithFormat:@"%@_%d",(vp->src?@"IMG":@"BOX"),s_views_idx];
+    //NSLog(@"Register view : %@",vp->ID);
+    [s_views[cName] addObject:[NSValue valueWithPointer:vp]];
+    
+}
 
+    
 
 #pragma mark - CPP wrapper
-__attribute__((overloadable)) $& box(){return *(new $());}
+__attribute__((overloadable)) $& box(){return (new $())->setStyle({});}
 __attribute__((overloadable)) $& box(Styles s){return (new $())->setStyle(s);}
 __attribute__((overloadable)) $& box(Styles *sp){return (new $())->setStyle(*sp);}
 __attribute__((overloadable)) $& box(Styles s, Styles *sp){return (new $())->setStyle(style(&s,sp));}
 
 __attribute__((overloadable)) $& box(initializer_list<Styles *>ext){return (new $())->setStyle({},ext);}
 __attribute__((overloadable)) $& box(Styles s, initializer_list<Styles *>ext){return (new $())->setStyle(s,ext);}
-__attribute__((overloadable)) $& sbox(){return *(new $(true));}
+__attribute__((overloadable)) $& sbox(){return (new $(true))->setStyle({});}
 __attribute__((overloadable)) $& sbox(Styles s){return (new $(true))->setStyle(s);}
 __attribute__((overloadable)) $& sbox(Styles *sp){return (new $(true))->setStyle(*sp);}
 __attribute__((overloadable)) $& sbox(Styles s,Styles *sp){return (new $(true))->setStyle(style(&s,sp));}
@@ -956,14 +1094,36 @@ __attribute__((overloadable)) $& sbox(Styles s,Styles *sp){return (new $(true))-
 __attribute__((overloadable)) $& sbox(initializer_list<Styles *>ext){return (new $(true))->setStyle({},ext);}
 __attribute__((overloadable)) $& sbox(Styles s, initializer_list<Styles *>ext){return (new $(true))->setStyle(s,ext);}
 
-__attribute__((overloadable)) $& label(NSString*txt){return (new $())->setText(txt);}
+__attribute__((overloadable)) $& label(NSString*txt){return (new $())->setStyle({}).setText(txt);}
 __attribute__((overloadable)) $& label(NSString*txt, Styles s){return (new $())->setStyle(s).setText(txt);}
 __attribute__((overloadable)) $& label(NSString*txt, Styles *sp){return (new $())->setStyle(*sp).setText(txt);}
 __attribute__((overloadable)) $& label(NSString*txt, Styles s,Styles *sp){return (new $())->setStyle(style(&s,sp)).setText(txt);}
-
 __attribute__((overloadable)) $& label(NSString*txt, std::initializer_list<Styles *>ext){return (new $())->setStyle({},ext).setText(txt);}
 __attribute__((overloadable)) $& label(NSString*txt, Styles s, std::initializer_list<Styles *>ext){return (new $())->setStyle(s,ext).setText(txt);}
-__attribute__((overloadable)) $& img(id src){return *(new $(src));}
+
+
+__attribute__((overloadable)) $& glabel(NSString*url,LabelContentHandler handler,Styles s){
+    $* v = new $;
+    v->setStyle(s);
+    if(url){
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [HTTPRequest get:url handler:^id(id res, NSDictionary *params) {
+                NSString * str = handler(res);
+                $* v = ($*) [params[@"view"] pointerValue];
+                v->setText(str);
+                return res;
+            } datas:@{@"view":[NSValue valueWithPointer:v]}];
+        });
+    }else{
+        v->setText(handler(nil));
+    }
+    return *v;
+}
+__attribute__((overloadable)) $& glabel(NSString*url,LabelContentHandler handler,Styles *sp){return glabel(url, handler, *sp);}
+__attribute__((overloadable)) $& glabel(NSString*url,LabelContentHandler handler,Styles s, Styles *sp){return glabel(url, handler, style(&s, sp));}
+
+
+__attribute__((overloadable)) $& img(id src){return (new $(src))->setStyle({});}
 __attribute__((overloadable)) $& img(id src, Styles s){return (new $(src))->setStyle(s);};
 __attribute__((overloadable)) $& img(id src, Styles *sp){return (new $(src))->setStyle(*sp);};
 __attribute__((overloadable)) $& img(id src, Styles s,Styles *sp){return (new $(src))->setStyle(style(&s,sp));};
@@ -987,8 +1147,15 @@ __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles 
     if(data && handler){
         int i = 0;
         $& ul = sbox(listStyle, ext);
-        for (id item in data)
-            ul << handler(item, i++); //TODO dispatch async
+        ul.view.clipsToBounds = YES;
+        float maxX = 0, maxY = 0;
+        for (id item in data){
+            $& it = handler(item, i++) >> ul;
+            CGRect re = it.rect();
+            maxX = MAX(maxX, (re.origin.x+re.size.width));
+            maxY = MAX(maxY, (re.origin.y+re.size.height));
+        }
+        ul.setContentSize(maxX, maxY);
         return ul;
     }
     return sbox(listStyle, ext);
@@ -1015,6 +1182,13 @@ __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handl
 
 
 #pragma mark - CPP
+
+void memuse(const char* msg) {
+    struct task_basic_info info;
+    mach_msg_type_number_t size = sizeof(info);
+    kern_return_t kerr = task_info(mach_task_self(),TASK_BASIC_INFO,(task_info_t)&info,&size);
+    NSLog(@"MEM : %@ %u KB",[NSString stringWithUTF8String:msg],info.resident_size/1024);
+}
 
 NSString * str(char * cs){return cs!=nil?[NSString stringWithFormat:@"%s",cs]:nil;}
 
@@ -1109,6 +1283,7 @@ __attribute__((overloadable)) Styles style(Styles *custom, Styles *ext){
     
     Styles ss = *ext;
     Styles sc = *custom;
+    if(sc.ID) ss.ID = sc.ID;
     if(sc.x) ss.x = sc.x;
     if(sc.y) ss.y = sc.y;
     if(sc.z) ss.z = sc.z;
@@ -1124,6 +1299,8 @@ __attribute__((overloadable)) Styles style(Styles *custom, Styles *ext){
     if(sc.outline) ss.outline = sc.outline;
     if(sc.outlineSpace) ss.outlineSpace = sc.outlineSpace;
     if(sc.outlineWidth) ss.outlineWidth = sc.outlineWidth;
+    
+    if(sc.contentMode) ss.contentMode = sc.contentMode;
     
     if(sc.shadow) ss.shadow = sc.shadow;
     if(sc.alpha) ss.alpha = sc.alpha;
@@ -1181,7 +1358,6 @@ Styles str2style(char * s){
             for (int i=0; i<vl; i++) {
                 v[i] = ss[i+el+1];
             }
-            
             if(k=="x") s0.x = atof(v);
             if(k=="y") s0.y = atof(v);
             if(k=="z") s0.z = atof(v);
@@ -1197,6 +1373,7 @@ Styles str2style(char * s){
             if(k=="outline") s0.outline = v;
             if(k=="outlineSpace") s0.outlineSpace = atoi(v);
             if(k=="outlineWidth") s0.outlineWidth = atoi(v);
+            if(k=="contentMode") s0.contentMode = (UIViewContentMode) atoi(v);
             
             if(k=="shadow") s0.shadow = v;
             if(k=="alpha") s0.alpha = atof(v);
