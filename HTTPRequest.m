@@ -127,11 +127,15 @@
 }
 
 + (NSString *)parseURL : (NSString*)url{
+#ifdef API_SERVER
     if([url hasPrefix:@"http:"] || [url hasPrefix:@"https:"])
         return url;
     else{
         return [NSString stringWithFormat:@"%s%@",API_SERVER,url];
     }
+#else
+    return url;
+#endif
 }
 
 #pragma mark -- NSURLConnection delegate

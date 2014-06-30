@@ -8,8 +8,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #include <OpenGLES/EAGL.h>
-#include <OpenGLES/ES1/gl.h>
-#include <OpenGLES/ES1/glext.h>
 
 #import "Styles.h"
 #import "HTTPRequest.h"
@@ -21,7 +19,10 @@
 
 #ifndef VIEW_H
 #define VIEW_H
-@class Mask;
+@class View;
+
+
+extern NSMutableDictionary * __datas;
 
 typedef void(^GestureHandler)(GR*, Dic*);
 
@@ -43,21 +44,29 @@ public :
 
 class ${
 public:
-    UIView  * view;
-    Mask    * mask;
-    NSString * ID;
-    CALayer * contentLayer;
-    CAShapeLayer * shapeLayer;
-    CATextLayer *textLayer;
-    NSString * text;
-    UIDynamicAnimator * animator;
-    NSMutableArray * behaviors;
-    NSMutableArray * dummys;
-    id src;
-    bool scrollable;
+    View       * view;             //a uiview extension which can save data and response to UIGesture.
+    //Mask        * mask;           //a mask to respond
+    NSString    * ID;               //unique id of this View.
     
-    $* parent;
-    NSMutableArray * nodes;
+    CALayer     * layer;            //base layer
+    CATransformLayer * transLayer;  //container layer to perform 3d transfrom
+    
+    CALayer      * contentLayer;    //visible layer, contains bg color and other styles.
+    
+    CALayer      * imageLayer;      //1st sublayer of contentLayer, contains image data
+    CAShapeLayer * shapeLayer;      //2nd sublayer of contentLayer, shape mask
+    CATextLayer  * textLayer;       //3rd sublayer of contentLayer, text
+
+    UIDynamicAnimator   * animator;
+    NSMutableArray      * behaviors;
+    NSMutableArray      * dummys;
+
+    id          src;
+    NSString   *text;
+    bool        scrollable;
+    
+    $*              parent;
+    NSMutableArray *nodes;
     
     __attribute__((overloadable)) $();
     __attribute__((overloadable)) $(id src); //for image only
@@ -116,16 +125,15 @@ public:
     
     $& setText(NSString * _text);
     $& setDefaultText(NSString * _text);
-    void setTextAlign(NSString* align);
+    void setTextAlign(const char* align);
     void setFont(char* font);
     __attribute__((overloadable)) void setColor(id color);
     __attribute__((overloadable)) void setColor(char* color);
     void setFontSize(float s);
     void switchEditingMode();
-    void setEditable(BOOL editable);
+    $& setEditable(BOOL editable);
     
-    void setContentSize(float x, float y);
-    
+    $& setContentSize(float x, float y);
     
     static NSMutableDictionary * s_views;
     static NSString * s_controllerName;
@@ -136,27 +144,23 @@ public:
     static void setControllerName(NSString *controllerName);
     
     void remove();
+    //TODO remove from super
     
-    //operators
 private:
     Styles styles;
     const char* svgPath;
     static void registerView($* vp);
-    
     bool released;
-    
 };
 
-typedef $ View;
+#pragma mark - View
 
-#pragma mark - Mask
-
-@interface Mask : UIView<UITextFieldDelegate,UITextViewDelegate>
+@interface View : UIScrollView<UITextFieldDelegate,UITextViewDelegate>
 @property (nonatomic,retain) NSMutableDictionary * gestures;
 @property (nonatomic,retain) NSMutableDictionary * data;
 @property (nonatomic,retain) UIView *textField;
 @property $* owner;
--(id) initWithOwner:($*)owner;
+-(id)   initWithOwner:($*)owner rect:(CGRect)rect;
 -(void) gestureHandler:(UIGestureRecognizer*)ges;
 -(void) switchEditingMode;
 @end
@@ -216,29 +220,49 @@ __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handl
 __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handler, Styles gridsStyle, std::initializer_list<Styles *>ext);
 
 
-#pragma mark - CPP
+#pragma mark - CPP style funcs
 
+//string
 NSString * str(char * cs);
 char * cstr(NSString * cs);
-
 UIColor * str2color(char * s);
-
-//char** split(char *s,const char* delim);
-
-void memuse(const char* msg);
-
 bool strstarts(char* s1, const char* s2);
 bool strends(char* s1, const char* s2);
 bool strhas(char* s1, const char* s2);
-
 char * f2str(float f);
 char * strs(int num, char* s ,...);
 
+//styles
 Styles str2style(char * s);
 __attribute__((overloadable)) Styles style(Styles *custom, Styles *ext);
 __attribute__((overloadable)) Styles style(Styles *custom, std::initializer_list<Styles *>exts);
 
+//time
+typedef void(^TimeoutHandler)(NSDictionary*);
+void $setTimeout(float millisec, TimeoutHandler block, NSDictionary* data);
+typedef BOOL(^TimeIntervalHandler)(NSDictionary*,int); //RETURN false to break
+void $setInterval(float millisec, TimeIntervalHandler block, NSDictionary*dic);
 
+//Controller
+UIViewController * $controller(NSString *controllerName);
+UIViewController * $transition(UIViewController*from, NSString* toControllerName, UIModalTransitionStyle style);
+
+//Data
+void $setData(NSString *keyPath, id value);
+id $getData(NSString *keyPath);
+NSString* $getStr(NSString *keyPath);
+int $getInt(NSString *keyPath);
+long $getLong(NSString *keyPath);
+float $getFloat(NSString *keyPath);
+NSArray* $getArr(NSString *keyPath);
+NSDictionary* $getHash(NSString *keyPath);
+void $removeData(NSString * key);
+void $clearData();
+void $saveData();
+void $loadData();
+
+//memory
+void memuse(const char* msg);
 
 #pragma mark - OpenGL
 

@@ -5,7 +5,7 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>109F2539-AB65-45EA-9BCF-8A26CF68E933</string>
+	<string>D3AC8CA9-2B5B-4B3D-89D5-8BD570104387</string>
 	<key>IDESourceControlProjectName</key>
 	<string>LiberObjcExample</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
@@ -34,7 +34,7 @@
 			<key>IDESourceControlWCCIdentifierKey</key>
 			<string>A2566E5D-F29F-4BEE-976D-68FD4D187EE1</string>
 			<key>IDESourceControlWCCName</key>
-			<string>linked-objc</string>
+			<string>LiberObjcExample</string>
 		</dict>
 	</array>
 </dict>

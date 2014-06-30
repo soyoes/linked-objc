@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 Liberhood ltd. All rights reserved.
 //
 
-
 #import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
@@ -69,6 +68,14 @@
 - (UIImage*) merge:(UIImage*)thumb;
 - (UIImage*) mirror:(int)height;
 - (UIImage*) filters:(NSString*)CIFilterName opts:(NSDictionary*)opts;
++ (void) loadImageFromAssetURL:(NSURL*)url handler:(void(^)(UIImage*,NSDictionary*))handler params:(NSDictionary*)params;
+
+- (UIImage *)applyLightEffect;
+- (UIImage *)applyExtraLightEffect;
+- (UIImage *)applyDarkEffect;
+- (UIImage *)applyTintEffectWithColor:(UIColor *)tintColor;
+
+- (UIImage *)applyBlurWithRadius:(CGFloat)blurRadius tintColor:(UIColor *)tintColor saturationDeltaFactor:(CGFloat)saturationDeltaFactor maskImage:(UIImage *)maskImage;
 
 @end
 

@@ -14,6 +14,7 @@
 #include <cctype>
 #include <regex>
 #include <iostream>
+#include <map>
 #import "Categories.h"
 #import "View.h"
 #import <objc/runtime.h>
@@ -24,18 +25,18 @@
 
 using namespace std;
 
-#pragma mark - Mask
+NSMutableDictionary * __datas=nil;
 
-@implementation Mask
+#pragma mark - $View
 
--(id) initWithOwner:($*)owner{
-    self = [super initWithFrame:owner->view.bounds];
+@implementation View
+
+-(id) initWithOwner:($*)owner rect:(CGRect)rect{
+    self = [super initWithFrame:rect];
     _data = [[NSMutableDictionary alloc] init];
     _gestures = [[NSMutableDictionary alloc] init];
     _owner = owner;
-    self.backgroundColor = [UIColor clearColor];
     self.userInteractionEnabled = YES;
-    [owner->view addSubview:self];
     return self;
 }
 
@@ -47,7 +48,7 @@ using namespace std;
     if(_gestures!=nil && _gestures[className]!=nil){
         GestureHandler handler = _gestures[className];
         if(handler){
-            Mask * v = (Mask*)ges.view;
+            View * v = (View*)ges.view;
             NSDictionary *params = [v.data valueForKey:@"gestureData"];
             handler(ges, params);
             //[v.data removeObjectForKey:@"gestureData"];
@@ -202,18 +203,18 @@ __attribute__((overloadable)) $::$(const char* path):svgPath(path){}
 // Constructor
 $::~$(){
     if(ID && !released){
-//        NSLog(@"Free view : %@",ID);
+        //NSLog(@"Free view : %@",ID);
         nodes=nil;
         view=nil;
-        if(mask){
-            if(mask.data)[mask.data removeAllObjects];
-            mask=nil;
-        }
         src=nil;
         text=nil;
-        textLayer=nil;
+        
+        layer=nil;
+        transLayer=nil;
         contentLayer=nil;
+        textLayer=nil;
         shapeLayer=nil;
+        
         animator =nil;
         behaviors=nil;
         dummys=nil;
@@ -226,49 +227,64 @@ $* $::initView(Styles s){
     styles = s;
     if(!view){
         CGRect rect =CGRectMake(styles.x, styles.y, styles.w, styles.h);
-        if(src!=nil){
-            view = [[UIImageView alloc] initWithFrame:rect];
-            //set Image at this time will lead the rendering slow
-        }else{
-            view = scrollable?[[UIScrollView alloc] initWithFrame:rect]:[[UIView alloc] initWithFrame:rect];
-        }
+        view = [[View alloc] initWithOwner:this rect:rect];
+        //view.userInteractionEnabled = YES;
     }
-    view.layer.zPosition = styles.z;
-    view.userInteractionEnabled = YES;
+    layer = view.layer;
+    layer.zPosition = styles.z;
+    
+    transLayer = [CATransformLayer layer];
+    transLayer.frame = view.bounds;
+    [layer addSublayer:transLayer];
+    
     contentLayer = [CALayer layer];
-    contentLayer.frame = view.layer.bounds;
-    [view.layer addSublayer:contentLayer];
+    contentLayer.frame = view.bounds;
+    [transLayer addSublayer:contentLayer];
+    
     if(styles.ID)ID = styles.ID;
     registerView(this);
+    
     return this;
 }
 
 __attribute__((overloadable))
 $& $::setStyle(Styles s){
-    initView(s);
-
-    CALayer *layer = shapeLayer?shapeLayer:contentLayer;
     
-    //self.alpha = styles.alpha;
-    if(src)
-        view.layer.opacity = (1-styles.alpha);
-    else layer.opacity = (1-styles.alpha);
-
+    bool initedBeforeSetting = ID!=nil;
     
-    if(styles.bgcolor){
-        if(strhas(styles.bgcolor, ":")){//gradient
-            this->drawGradient(str(styles.bgcolor));
-        }else{
-            if(shapeLayer)
-                shapeLayer.fillColor =str2color(styles.bgcolor).CGColor;
-            else
-                contentLayer.backgroundColor=str2color(styles.bgcolor).CGColor;
+    if(ID==nil)
+        initView(s);
+    
+    Styles ss = initedBeforeSetting? s: styles;
+
+    //CALayer *_layer = shapeLayer?shapeLayer:contentLayer;
+    layer.opacity = (1-ss.alpha);
+    
+    if(initedBeforeSetting){
+        float ww = ss.w ? ss.w : styles.w;
+        float hh = ss.h ? ss.h : styles.h;
+        if(ss.x!=styles.x || ss.y!=styles.y){
+            view.center=CGPointMake(ss.x+ww/2, ss.y+hh/2);
         }
-        
+        if(ss.w||ss.h){
+            view.bounds = CGRectMake(0, 0, ww, hh);
+        }
     }
     
-    if(styles.shadow){
-        NSString *shadow = [str(styles.shadow) regexpReplace:@"  +" replace:@" "];
+    if(ss.bgcolor){
+        if(strhas(ss.bgcolor, ":")){//gradient
+            this->drawGradient(str(ss.bgcolor));
+        }else{
+            if(shapeLayer){
+                shapeLayer.fillColor =str2color(ss.bgcolor).CGColor;
+                contentLayer.backgroundColor = [UIColor clearColor].CGColor;
+            }else
+                contentLayer.backgroundColor=str2color(ss.bgcolor).CGColor;
+        }
+    }
+    
+    if(ss.shadow){
+        NSString *shadow = [str(ss.shadow) regexpReplace:@"  +" replace:@" "];
         if([shadow contains:@","]){
             NSArray *shadows = [shadow componentsSeparatedByString:@","];
             for(NSString *sha in shadows)
@@ -278,42 +294,46 @@ $& $::setStyle(Styles s){
         }
     }
 
-    if(styles.border) this->drawBorder(str(styles.border));
+    if(ss.border) this->drawBorder(str(ss.border));
+    if(styles.cornerRadius>0) { //radius
+        contentLayer.cornerRadius = styles.cornerRadius;
+        contentLayer.masksToBounds=YES;
+    }
     
-    if(styles.padding){
-        styles.paddingLeft=styles.padding;
-        styles.paddingTop=styles.padding;
-        styles.paddingRight=styles.padding;
-        styles.paddingBottom=styles.padding;
+    if(ss.padding){
+        ss.paddingLeft=ss.padding;
+        ss.paddingTop=ss.padding;
+        ss.paddingRight=ss.padding;
+        ss.paddingBottom=ss.padding;
     }
     
     
-    if(styles.outline){
-        this->drawOutline(str(styles.outline));
+    if(ss.outline){
+        this->drawOutline(str(ss.outline));
     }
     
     CGAffineTransform transf;
     bool trasDefined=false;
-    if(styles.scaleX>0 && styles.scaleY>0){
+    if(ss.scaleX>0 && ss.scaleY>0){
         trasDefined = true;
-        transf = CGAffineTransformMakeScale(styles.scaleX, styles.scaleY);
+        transf = CGAffineTransformMakeScale(ss.scaleX, ss.scaleY);
     }
     
-    if(styles.flip){
+    if(ss.flip){
         CGAffineTransform flip;
-        if (styles.flip[0] == 'H') {
+        if (ss.flip[0] == 'H') {
             flip =CGAffineTransformMake(view.transform.a * -1, 0, 0, 1, view.transform.tx, 0);
             transf = trasDefined? CGAffineTransformConcat(transf,flip):flip;
             trasDefined = true;
-        }else if(styles.flip[0] == 'V'){
+        }else if(ss.flip[0] == 'V'){
             flip = CGAffineTransformMake(1, 0, 0, view.transform.d * -1, 0, view.transform.ty);
             transf = trasDefined? CGAffineTransformConcat(transf,flip):flip;
             trasDefined = true;
         }
     }
     
-    if(styles.rotate){
-        CGAffineTransform rotate = CGAffineTransformMakeRotation(radians(styles.rotate));
+    if(ss.rotate){
+        CGAffineTransform rotate = CGAffineTransformMakeRotation(radians(ss.rotate));
         transf = trasDefined? CGAffineTransformConcat(transf,rotate):rotate;
         trasDefined = true;
     }
@@ -321,8 +341,8 @@ $& $::setStyle(Styles s){
     if(trasDefined)
         view.transform = transf;
     
-    if(styles.rotate3d){
-        string rotate(styles.rotate3d);
+    if(ss.rotate3d){
+        string rotate(ss.rotate3d);
         //degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
         float parts[] = {0,0,0,0,500,0.5,0.5,0,0,0};
         rotate = regex_replace(rotate, regex("\\s*,\\s*"), ",");
@@ -336,14 +356,15 @@ $& $::setStyle(Styles s){
             i++;
         }while(end != string::npos);
         
-        CALayer *layer = contentLayer;
-        layer.anchorPoint = CGPointMake(parts[5], parts[6]);
+        transLayer.anchorPoint = CGPointMake(parts[5], parts[6]);
         CATransform3D rt = CATransform3DIdentity;
         rt.m34 = 1.0f / (-1*parts[4]);
         rt = CATransform3DRotate(rt, radians(parts[0]), parts[1], parts[2], parts[3]);
         rt = CATransform3DTranslate(rt, parts[7], parts[8], parts[9]);
-        layer.transform = rt;//CATransform3DConcat
+        transLayer.transform = rt;//CATransform3DConcat
     }
+    
+    if(initedBeforeSetting) *&styles = style(&s, &styles);
     
     return *this;
 }
@@ -358,13 +379,11 @@ $& $::setStyle(Styles st, initializer_list<Styles *>ext){
 $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
     if([_events indexOfObject:event]==NSNotFound || handler==NULL)
         return *this;
-    if(!mask)
-        mask = [[Mask alloc] initWithOwner:this];
-    mask.gestures[event] = (id) handler;
+    view.gestures[event] = (id) handler;
     event = [event stringByReplacingCharactersInRange:NSMakeRange(0,1) withString:[[event substringToIndex:1] uppercaseString]];
     NSString * className = [NSString stringWithFormat:@"UI%@GestureRecognizer",event];
     UIGestureRecognizer *gesture = [[NSClassFromString(className) alloc]
-                                    initWithTarget:mask action:@selector(gestureHandler:)];
+                                    initWithTarget:view action:@selector(gestureHandler:)];
     //[mask setUserInteractionEnabled:YES];
     [view setUserInteractionEnabled:YES];
     /*
@@ -373,14 +392,13 @@ $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
      */
     if(opts!=nil && [[opts allKeys] count]>0){
         //this->set(@"gestureData", opts);
-        [mask.data setValue:opts forKey:@"gestureData"];
+        [view.data setValue:opts forKey:@"gestureData"];
     }
-    [mask addGestureRecognizer:gesture];
+    [view addGestureRecognizer:gesture];
     return *this;
 }
 $& $::unbind(NSString* event){
-    if(!mask) return *this;
-    [mask.gestures removeObjectForKey:event];
+    [view.gestures removeObjectForKey:event];
     //mask removeGestureRecognizer:<#(UIGestureRecognizer *)#>
     //FIXME remove event
     return *this;
@@ -389,7 +407,7 @@ $& $::unbind(NSString* event){
 $& $::dragable(GestureHandler onDrag, GestureHandler onEnd){
     this->bind(@"pan",^(GR *ges, Dic *params) {
         UIPanGestureRecognizer * r = (UIPanGestureRecognizer *) ges;
-        Mask*m = r.view;
+        View *m = r.view;
         if(r.state == UIGestureRecognizerStateEnded){
             [m.data removeObjectForKey:@"diffX"];
             [m.data removeObjectForKey:@"diffY"];
@@ -412,7 +430,6 @@ CGRect $::rect(){
 }
 
 void $::remove(){
-    if(mask)[mask removeFromSuperview];
     if(view)[view removeFromSuperview];
     delete this;
 }
@@ -550,8 +567,9 @@ $& $::addCollision(Dic *opt){
                 [b addBoundaryWithIdentifier:@"rect"
                                    fromPoint:CGPointMake([opt[@"points"][0] floatValue], [opt[@"points"][1] floatValue])
                                      toPoint:CGPointMake([opt[@"points"][2] floatValue], [opt[@"points"][3] floatValue])];
-            }else
-                b.translatesReferenceBoundsIntoBoundary = YES;
+            }
+            else b.translatesReferenceBoundsIntoBoundary = YES;
+            b.collisionMode = UICollisionBehaviorModeEverything;
         }else if(opt[@"svg"]){
             CGPathRef path = SVG::path([opt[@"svg"] UTF8String]);
             [b addBoundaryWithIdentifier:@"svg" forPath:[UIBezierPath bezierPathWithCGPath:path]];
@@ -569,7 +587,7 @@ $& $::addCollision(Dic *opt){
 
 __attribute__((overloadable)) $& $::operator>>($& p){
     if(&p){
-        [p.view addSubview:this->view];
+        [p.view addSubview:view];
         if(src)setImage(src);
         parent = &p;
         if(!p.nodes)p.nodes = [[NSMutableArray alloc] init];
@@ -578,11 +596,10 @@ __attribute__((overloadable)) $& $::operator>>($& p){
     return *this;
 }
 __attribute__((overloadable)) $& $::operator>>(UIView*p){
-    if(p){[p addSubview:this->view];if(src)setImage(src);}
+    if(p){[p addSubview:view];if(src)setImage(src);}
     return *this;
 }
 __attribute__((overloadable)) $& $::operator<<($& p){
-    //if(&p){[view addSubview:p.view];if(p)p.parent = this;nodes.push_back(&p);}
     p >> *this;
     return *this;
 }
@@ -597,14 +614,14 @@ $* $::operator[](int idx){
 #pragma mark $ data
 
 id $::get(NSString* key){
-    if(mask){return [mask.data valueForKey:key];}
+    if(view){return [view.data valueForKey:key];}
     return nil;
 }
 void $::set(NSString*key, id value){
-    if(mask){[mask.data setValue:value forKey:key];}
+    if(view){[view.data setValue:value forKey:key];}
 }
 void $::del(NSString*key){
-    if(mask){[mask.data removeObjectForKey:key];}
+    if(view){[view.data removeObjectForKey:key];}
 }
 
 #pragma mark $ drawing
@@ -628,10 +645,6 @@ void $::drawBorder(NSString *border){
             contentLayer.borderColor = str2color(styles.borderColor).CGColor;
         }else{//image
             contentLayer.borderColor = [UIColor colorWithPatternImage:[UIImage imageNamed:str(styles.borderColor)]].CGColor;
-        }
-        if(styles.cornerRadius>0) { //radius
-            contentLayer.cornerRadius = styles.cornerRadius;
-            contentLayer.masksToBounds=YES;
         }
     }else{
         shapeLayer.strokeColor=str2color(styles.borderColor).CGColor;
@@ -667,8 +680,9 @@ void $::drawShadow(NSString* shadow){
             //_innerShadow = [[InnerShadow alloc] initWithTarget:self x:x y:y r:r];
             CALayer * s = [CALayer layer];
             s.zPosition = 8;
-            float o = styles.outlineWidth+styles.outlineSpace;
+            
             /*
+            float o = styles.outlineWidth+styles.outlineSpace;
             float left = view.borderLeft!=nil? view.borderLeft.width+o : o;
             float top = view.borderTop!=nil? view.borderTop.width+o : o;
             float right = view.borderRight!=nil? view.borderRight.width+o : o;
@@ -676,20 +690,21 @@ void $::drawShadow(NSString* shadow){
             float mx = MAX(MAX(left, right),MAX(top, bottom));
             s.frame = CGRectMake(left-x, top-y, view.bounds.size.width-left-right+2*x, view.bounds.size.height-top-bottom+2*y);
             s.cornerRadius = styles.cornerRadius>mx ? styles.cornerRadius-mx : 0;
+            float ww = styles.borderWidth?styles.borderWidth+o:o;
             */
             
-            float ww = styles.borderWidth?styles.borderWidth+o:o;
+            float ww = styles.borderWidth?styles.borderWidth:0;
             s.frame = CGRectMake(ww-x, ww-y, contentLayer.bounds.size.width-2*ww+2*x, contentLayer.bounds.size.height-2*ww+2*y);
             s.cornerRadius = styles.cornerRadius>ww ? styles.cornerRadius-ww : 0;
             s.borderWidth = MAX(x, y);
             s.borderColor = [UIColor colorWithWhite:1 alpha:1].CGColor;
             s.shadowOffset = CGSizeMake(x/2, y/2);
             s.shadowRadius = r;
-            s.shadowOpacity = 0.7;
+            s.shadowOpacity = 1.0;
             s.shadowColor = cl.CGColor;
             s.masksToBounds = YES;
-            
             [layer addSublayer:s];
+            layer.masksToBounds = YES;
             s = nil;
         }else{
             layer.shadowOffset = CGSizeMake(x, y);
@@ -797,11 +812,12 @@ void $::drawSvgPath (const char* svgpathcmd){
 
 
 #pragma mark $ scroll
-void $::setContentSize(float x, float y){
+$& $::setContentSize(float x, float y){
     if(scrollable)
         ((UIScrollView*)view).contentSize = CGSizeMake(x, y);
     else
         NSLog(@"LiberOBJC ERROR: You can not specify contentSize to UIView, use sbox instead");
+    return *this;
 }
 
 #pragma mark $ image
@@ -817,7 +833,7 @@ $& $::setImage(id _src){
                 NSError* error = nil;
                 NSData* data = [NSData dataWithContentsOfURL:[NSURL URLWithString:src] options:NSDataReadingUncached error:&error];
                 if(data&&!error){
-                    [((UIImageView*)this->view) setImage:[UIImage imageWithData:data]];
+                    this->setImage([UIImage imageWithData:data]);
                 }else{
                     NSLog(@"Failed To Load Image From URL:%@",src);
                 }
@@ -838,19 +854,48 @@ $& $::setImage(id _src){
     }else if([_src isKindOfClass:[UIImage class]])
         img = _src;
     if(img){
-        [((UIImageView*)view) setImage:img];
-        if(styles.contentMode>=0&&styles.contentMode<=UIViewContentModeBottomRight)
-            this->view.contentMode = styles.contentMode;
-        src=nil;
+        if(!imageLayer){
+            imageLayer=[CALayer layer];
+            [contentLayer insertSublayer:imageLayer atIndex:0];
+        }
+        CGFloat imgW = CGImageGetWidth(img.CGImage);
+        CGFloat imgH = CGImageGetHeight(img.CGImage);
+        if(imgW && imgH){
+            CGFloat cw = contentLayer.bounds.size.width;
+            CGFloat ch = contentLayer.bounds.size.height;
+            CGFloat wScale = cw / imgW;
+            CGFloat hScale = ch / imgH;
+            CGFloat w,h;
+            switch (styles.contentMode) {
+                case m_FIT:
+                    w = wScale>hScale?imgW*hScale:cw;
+                    h = wScale>hScale?ch:imgH*wScale;
+                    imageLayer.frame = {{wScale>hScale?(cw-w)/2:0,wScale>hScale?0:(ch-h)/2},{w,h}};
+                    break;
+                case m_CROP_FIT:
+                    w = wScale>hScale?cw:imgW*hScale;
+                    h = wScale>hScale?imgH*wScale:ch;
+                    imageLayer.frame = {{wScale>hScale?0:(cw-w)/2,wScale>hScale?(ch-h)/2:0},{w,h}};
+                    break;
+                case m_ORG:
+                    imageLayer.frame = {{(cw-imgW)/2,(ch-imgH)/2},{imgW,imgH}};
+                    break;
+                default://m_FILL
+                    imageLayer.frame = {{0,0},{styles.w,styles.h}};
+                    break;
+            }
+            imageLayer.contents =(__bridge id)img.CGImage;
+            if(shapeLayer)
+                imageLayer.mask = shapeLayer;
+        }
+        src = nil;
     }
     img = nil;
-    
     return *this;
 }
 UIImage * $::getImage(){
-    if(view && [view isKindOfClass:[UIImageView class]]){
-        return ((UIImageView*)view).image;
-    }
+    if(imageLayer)
+        return [UIImage imageWithCGImage:(CGImageRef)imageLayer.contents];
     return nil;
 }
 
@@ -859,24 +904,21 @@ UIImage * $::getImage(){
 $& $::setText(NSString * _text){
     text = _text;
     
-    if(!mask)
-        mask = [[Mask alloc] initWithOwner:this];
-    
     // TODO
     // - (CGSize)sizeThatFits:(CGSize)size //calculate a size to make the superview to fit its all subviews
     // - (void)sizeToFit //auto adjust super view to fit its all subviews
     
-    
     CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
     
     //logRect(@"txt",rect);
-    if(textLayer==nil)
+    if(textLayer==nil){
         textLayer= [[CATextLayer alloc] init];
-        else
-            textLayer.hidden = NO;
-            if ([textLayer respondsToSelector:@selector(setContentsScale:)]){
-                textLayer.contentsScale = [[UIScreen mainScreen] scale];
-            }
+        [contentLayer addSublayer:textLayer];
+    }else
+        textLayer.hidden = NO;
+    if ([textLayer respondsToSelector:@selector(setContentsScale:)]){
+        textLayer.contentsScale = [[UIScreen mainScreen] scale];
+    }
     
     [textLayer setFrame:rect];
     [textLayer setString:text];
@@ -891,9 +933,11 @@ $& $::setText(NSString * _text){
     if(styles.color)
         this->setColor(styles.color);
     
-    this->setTextAlign(str(styles.textAlign));
+    this->setTextAlign(styles.textAlign);
     
-    [contentLayer addSublayer:textLayer];
+    textLayer.wrapped = !styles.nowrap;
+    textLayer.truncationMode = styles.truncate ? kCATruncationEnd:kCATruncationNone;
+    
     return *this;
 }
 
@@ -905,20 +949,19 @@ $& $::setDefaultText(NSString * _text){
     return *this;
 }
 
-void $::setTextAlign(NSString* align){
-    if(align==nil)
-        align = @"left";
-    const NSDictionary * def = @{@"center":kCAAlignmentCenter,@"left":kCAAlignmentLeft,
-                                     @"right":kCAAlignmentRight,@"justified":kCAAlignmentJustified};
-    if(align!=nil)
-        styles.textAlign = cstr(align);
-    
-    NSString *a = (align!=nil && def[align]!=nil) ? def[align]:kCAAlignmentNatural;
+void $::setTextAlign(const char* align){
+    if(!align)
+        align = "left";
+    static std::map<const char*, NSString*> def = {
+        {"center",kCAAlignmentCenter},
+        {"left",kCAAlignmentLeft},
+        {"right",kCAAlignmentRight},
+        {"justified",kCAAlignmentJustified},
+        {"natural",kCAAlignmentNatural}
+    };
     if(textLayer!=nil){
-        [textLayer setAlignmentMode:a];
+        [textLayer setAlignmentMode:def[align]];
     }
-    textLayer.wrapped = !styles.nowrap;
-    textLayer.truncationMode = styles.truncate ? kCATruncationEnd:kCATruncationNone;
 }
 
 void $::setFont(char* font){
@@ -983,9 +1026,9 @@ void $::setFontSize(float s){
     }
 }
 
-void $::setEditable(BOOL editable){
+$& $::setEditable(BOOL editable){
     styles.editable = editable;
-    if(mask.textField==nil){
+    if(view.textField==nil){
         CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
         
         NSDictionary * orgs = @{};//FIXME : check styles.mm
@@ -1004,26 +1047,27 @@ void $::setEditable(BOOL editable){
         
         if(textLayer.wrapped ||!styles.nowrap){
             UITextView* t = [[UITextView alloc] initWithFrame:rect];
-            t.delegate = mask;
+            t.delegate = view;
             t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
             t.font = [UIFont fontWithName:fontName size:fontSize];
             t.editable = YES;
-            mask.textField = t;
+            view.textField = t;
         }else{
             UITextField* t = [[UITextField alloc] initWithFrame:rect];
-            t.delegate = mask;
+            t.delegate = view;
             if(styles.placeHolder!=nil)
                 t.placeholder = str(styles.placeHolder);
             t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
             t.font = [UIFont fontWithName:fontName size:fontSize];
-            mask.textField = t;
+            view.textField = t;
         }
-        mask.textField.hidden = YES;
+        view.textField.hidden = YES;
     }
     this->bind(@"tap", ^void (UIGestureRecognizer*ges, NSDictionary*params){
-        Mask *v = (Mask *)ges.view;
+        View *v = (View *)ges.view;
         [v switchEditingMode];
     },nil);
+    return *this;
 }
 
 #pragma mark - Static
@@ -1247,6 +1291,7 @@ bool strends(char* s1, const char* s2){
 }
 
 bool strhas(char* s1, const char* s2){
+    if(!s1 || !s2) return false;
     string ss1(s1), ss2(s2);
     return (ss1.find(ss2) != string::npos);
 }
@@ -1276,6 +1321,8 @@ char * strs(int num, char* s ,...){
     strcpy(cstr, st.c_str());
     return cstr;
 }
+
+#pragma mark styles
 
 __attribute__((overloadable)) Styles style(Styles *custom, Styles *ext){
     
@@ -1373,7 +1420,7 @@ Styles str2style(char * s){
             if(k=="outline") s0.outline = v;
             if(k=="outlineSpace") s0.outlineSpace = atoi(v);
             if(k=="outlineWidth") s0.outlineWidth = atoi(v);
-            if(k=="contentMode") s0.contentMode = (UIViewContentMode) atoi(v);
+            if(k=="contentMode") s0.contentMode = atoi(v);
             
             if(k=="shadow") s0.shadow = v;
             if(k=="alpha") s0.alpha = atof(v);
@@ -1405,6 +1452,101 @@ Styles str2style(char * s){
         start = end + 1;
     }while(end != string::npos);
     return s0;
+}
+
+#pragma mark time
+void $setTimeout(float millisec, TimeoutHandler block, NSDictionary*dic){
+    dispatch_time_t span = dispatch_time(DISPATCH_TIME_NOW, millisec*0.001f * NSEC_PER_SEC);
+    dispatch_after(span, dispatch_get_main_queue(), ^(void){
+        block(dic);
+    });
+}
+
+/**
+ @exmample
+ $& __block ico = $ico(@"train",{0,30}) >> self.view;
+ $setInterval(40, ^BOOL(NSDictionary*d, int i){
+ ico.view.center = CGPointMake(i*10, 30);   //move this ico
+ return (i>100) ? @NO:@YES; // exec for 100 times.
+ }, @{});
+ 
+ */
+void $setInterval(float millisec, TimeIntervalHandler block, NSDictionary*dic){
+    static int counter=0;
+    dispatch_time_t span = dispatch_time(DISPATCH_TIME_NOW, millisec*0.001f * NSEC_PER_SEC);
+    dispatch_after(span, dispatch_get_main_queue(), ^(void){
+        if(block(dic, counter++)) $setInterval(millisec, block, dic);
+        else counter=0;
+    });
+}
+
+#pragma mark data
+
+void $setData(NSString *keyPath, id value){
+    //AppDelegate *casya = $app();
+    if(__datas==nil) $loadData();
+    [__datas setValue:value forKeyPath:keyPath];
+}
+id $getData(NSString *keyPath){
+    //AppDelegate *casya = $app();
+    if(__datas==nil) $loadData();
+    return [__datas valueForKeyPath:keyPath];
+}
+NSString* $getStr(NSString *keyPath){
+    id v =$getData(keyPath);
+    return (NSString*)v;
+}
+int $getInt(NSString *keyPath){
+    id v =$getData(keyPath);
+    return v!=nil? [(NSNumber*)v integerValue]:0;
+}
+long $getLong(NSString *keyPath){
+    id v =$getData(keyPath);
+    return v!=nil? [(NSNumber*)v longValue]:0;
+}
+float $getFloat(NSString *keyPath){
+    id v =$getData(keyPath);
+    return v!=nil? [(NSNumber*)v floatValue]:0;
+}
+NSArray* $getArr(NSString *keyPath){
+    id v =$getData(keyPath);
+    return (NSArray*)v;
+}
+NSDictionary* $getHash(NSString *keyPath){
+    id v =$getData(keyPath);
+    return (NSDictionary*)v;
+}
+
+void $removeData(NSString * key){
+    if(__datas==nil)return;
+    [__datas removeObjectForKey:key];
+}
+void $clearData(){
+    if(__datas==nil)return;
+    [__datas removeAllObjects];
+}
+
+void $saveData(){
+#ifdef DATA_FILE_NAME
+    if(__datas!=nil)
+        [__datas writeToFile:[NSString stringWithUTF8String:DATA_FILE_NAME] atomically:YES];
+#endif
+}
+
+void $loadData(){
+#ifdef DATA_FILE_NAME
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *docDir = [paths objectAtIndex:0];
+    NSString * fpath = [docDir stringByAppendingPathComponent:[NSString stringWithUTF8String:DATA_FILE_NAME]];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if ([fm fileExistsAtPath:fpath]){
+        __datas = [[NSMutableDictionary alloc] initWithContentsOfFile:fpath];
+    }else{
+        __datas = [[NSMutableDictionary alloc] init];
+    }
+#else
+    __datas = [[NSMutableDictionary alloc] init];
+#endif
 }
 
 

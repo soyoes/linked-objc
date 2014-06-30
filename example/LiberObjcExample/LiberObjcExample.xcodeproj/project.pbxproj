@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D06B018B195FACF00024FD47 /* examples.mm in Sources */ = {isa = PBXBuildFile; fileRef = D06B0189195FACF00024FD47 /* examples.mm */; };
+		D06B018E195FFE840024FD47 /* banff.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D06B018D195FFE840024FD47 /* banff.jpg */; };
 		D0F252EF195F820D00F80552 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252EE195F820D00F80552 /* Foundation.framework */; };
 		D0F252F1195F820D00F80552 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F0195F820D00F80552 /* CoreGraphics.framework */; };
 		D0F252F3195F820D00F80552 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F2195F820D00F80552 /* UIKit.framework */; };
@@ -14,13 +16,20 @@
 		D0F252FB195F820D00F80552 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D0F252FA195F820D00F80552 /* main.m */; };
 		D0F252FF195F820D00F80552 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D0F252FE195F820D00F80552 /* AppDelegate.m */; };
 		D0F25302195F820D00F80552 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D0F25300195F820D00F80552 /* Main.storyboard */; };
-		D0F25305195F820D00F80552 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D0F25304195F820D00F80552 /* ViewController.m */; };
+		D0F25305195F820D00F80552 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F25304195F820D00F80552 /* ViewController.mm */; };
 		D0F25307195F820D00F80552 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0F25306195F820D00F80552 /* Images.xcassets */; };
 		D0F2530E195F820D00F80552 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F2530D195F820D00F80552 /* XCTest.framework */; };
 		D0F2530F195F820D00F80552 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252EE195F820D00F80552 /* Foundation.framework */; };
 		D0F25310195F820D00F80552 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F2195F820D00F80552 /* UIKit.framework */; };
 		D0F25318195F820D00F80552 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D0F25316195F820D00F80552 /* InfoPlist.strings */; };
 		D0F2531A195F820D00F80552 /* LiberObjcExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = D0F25319195F820D00F80552 /* LiberObjcExampleTests.m */; };
+		D0F25324195F830700F80552 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F25323195F830700F80552 /* QuartzCore.framework */; };
+		D0F25326195F832A00F80552 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F25325195F832A00F80552 /* OpenGLES.framework */; };
+		D0F25328195F833100F80552 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F25327195F833100F80552 /* AssetsLibrary.framework */; };
+		D0F25331195F83D500F80552 /* Categories.m in Sources */ = {isa = PBXBuildFile; fileRef = D0F2532B195F83D500F80552 /* Categories.m */; };
+		D0F25332195F83D500F80552 /* HTTPRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = D0F2532D195F83D500F80552 /* HTTPRequest.m */; };
+		D0F25333195F83D500F80552 /* View.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F25330195F83D500F80552 /* View.mm */; };
+		D0F25337195F846800F80552 /* style_sheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F25335195F846800F80552 /* style_sheet.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +43,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D06B0189195FACF00024FD47 /* examples.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = examples.mm; sourceTree = "<group>"; };
+		D06B018A195FACF00024FD47 /* examples.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = examples.h; sourceTree = "<group>"; };
+		D06B018D195FFE840024FD47 /* banff.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = banff.jpg; sourceTree = "<group>"; };
 		D0F252EB195F820D00F80552 /* LiberObjcExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiberObjcExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0F252EE195F820D00F80552 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D0F252F0195F820D00F80552 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -46,13 +58,25 @@
 		D0F252FE195F820D00F80552 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		D0F25301195F820D00F80552 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		D0F25303195F820D00F80552 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		D0F25304195F820D00F80552 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		D0F25304195F820D00F80552 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
 		D0F25306195F820D00F80552 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		D0F2530C195F820D00F80552 /* LiberObjcExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiberObjcExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0F2530D195F820D00F80552 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		D0F25315195F820D00F80552 /* LiberObjcExampleTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LiberObjcExampleTests-Info.plist"; sourceTree = "<group>"; };
 		D0F25317195F820D00F80552 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		D0F25319195F820D00F80552 /* LiberObjcExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LiberObjcExampleTests.m; sourceTree = "<group>"; };
+		D0F25323195F830700F80552 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		D0F25325195F832A00F80552 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
+		D0F25327195F833100F80552 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		D0F2532A195F83D500F80552 /* Categories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Categories.h; path = ../../../Categories.h; sourceTree = "<group>"; };
+		D0F2532B195F83D500F80552 /* Categories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Categories.m; path = ../../../Categories.m; sourceTree = "<group>"; };
+		D0F2532C195F83D500F80552 /* HTTPRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPRequest.h; path = ../../../HTTPRequest.h; sourceTree = "<group>"; };
+		D0F2532D195F83D500F80552 /* HTTPRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = HTTPRequest.m; path = ../../../HTTPRequest.m; sourceTree = "<group>"; };
+		D0F2532E195F83D500F80552 /* Styles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Styles.h; path = ../../../Styles.h; sourceTree = "<group>"; };
+		D0F2532F195F83D500F80552 /* View.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = View.h; path = ../../../View.h; sourceTree = "<group>"; };
+		D0F25330195F83D500F80552 /* View.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = View.mm; path = ../../../View.mm; sourceTree = "<group>"; };
+		D0F25335195F846800F80552 /* style_sheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = style_sheet.mm; sourceTree = "<group>"; };
+		D0F25336195F846800F80552 /* style_sheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = style_sheet.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +84,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0F25328195F833100F80552 /* AssetsLibrary.framework in Frameworks */,
+				D0F25326195F832A00F80552 /* OpenGLES.framework in Frameworks */,
+				D0F25324195F830700F80552 /* QuartzCore.framework in Frameworks */,
 				D0F252F1195F820D00F80552 /* CoreGraphics.framework in Frameworks */,
 				D0F252F3195F820D00F80552 /* UIKit.framework in Frameworks */,
 				D0F252EF195F820D00F80552 /* Foundation.framework in Frameworks */,
@@ -79,6 +106,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D06B018C195FFE840024FD47 /* images */ = {
+			isa = PBXGroup;
+			children = (
+				D06B018D195FFE840024FD47 /* banff.jpg */,
+			);
+			name = images;
+			path = LiberObjcExample/images;
+			sourceTree = "<group>";
+		};
 		D0F252E2195F820D00F80552 = {
 			isa = PBXGroup;
 			children = (
@@ -86,6 +122,7 @@
 				D0F25313195F820D00F80552 /* LiberObjcExampleTests */,
 				D0F252ED195F820D00F80552 /* Frameworks */,
 				D0F252EC195F820D00F80552 /* Products */,
+				D06B018C195FFE840024FD47 /* images */,
 			);
 			sourceTree = "<group>";
 		};
@@ -101,6 +138,9 @@
 		D0F252ED195F820D00F80552 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D0F25327195F833100F80552 /* AssetsLibrary.framework */,
+				D0F25325195F832A00F80552 /* OpenGLES.framework */,
+				D0F25323195F830700F80552 /* QuartzCore.framework */,
 				D0F252EE195F820D00F80552 /* Foundation.framework */,
 				D0F252F0195F820D00F80552 /* CoreGraphics.framework */,
 				D0F252F2195F820D00F80552 /* UIKit.framework */,
@@ -112,12 +152,17 @@
 		D0F252F4195F820D00F80552 /* LiberObjcExample */ = {
 			isa = PBXGroup;
 			children = (
+				D0F25329195F83B900F80552 /* liberobjc */,
 				D0F252FD195F820D00F80552 /* AppDelegate.h */,
 				D0F252FE195F820D00F80552 /* AppDelegate.m */,
 				D0F25300195F820D00F80552 /* Main.storyboard */,
 				D0F25303195F820D00F80552 /* ViewController.h */,
-				D0F25304195F820D00F80552 /* ViewController.m */,
+				D0F25304195F820D00F80552 /* ViewController.mm */,
+				D06B018A195FACF00024FD47 /* examples.h */,
+				D06B0189195FACF00024FD47 /* examples.mm */,
 				D0F25306195F820D00F80552 /* Images.xcassets */,
+				D0F25336195F846800F80552 /* style_sheet.h */,
+				D0F25335195F846800F80552 /* style_sheet.mm */,
 				D0F252F5195F820D00F80552 /* Supporting Files */,
 			);
 			path = LiberObjcExample;
@@ -151,6 +196,21 @@
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
+		};
+		D0F25329195F83B900F80552 /* liberobjc */ = {
+			isa = PBXGroup;
+			children = (
+				D0F2532A195F83D500F80552 /* Categories.h */,
+				D0F2532B195F83D500F80552 /* Categories.m */,
+				D0F2532C195F83D500F80552 /* HTTPRequest.h */,
+				D0F2532D195F83D500F80552 /* HTTPRequest.m */,
+				D0F2532E195F83D500F80552 /* Styles.h */,
+				D0F2532F195F83D500F80552 /* View.h */,
+				D0F25330195F83D500F80552 /* View.mm */,
+			);
+			name = liberobjc;
+			path = LiberObjcExample;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -229,6 +289,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D0F25307195F820D00F80552 /* Images.xcassets in Resources */,
+				D06B018E195FFE840024FD47 /* banff.jpg in Resources */,
 				D0F252F9195F820D00F80552 /* InfoPlist.strings in Resources */,
 				D0F25302195F820D00F80552 /* Main.storyboard in Resources */,
 			);
@@ -249,8 +310,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D0F25305195F820D00F80552 /* ViewController.m in Sources */,
+				D0F25333195F83D500F80552 /* View.mm in Sources */,
+				D0F25305195F820D00F80552 /* ViewController.mm in Sources */,
+				D0F25331195F83D500F80552 /* Categories.m in Sources */,
+				D0F25337195F846800F80552 /* style_sheet.mm in Sources */,
+				D06B018B195FACF00024FD47 /* examples.mm in Sources */,
 				D0F252FF195F820D00F80552 /* AppDelegate.m in Sources */,
+				D0F25332195F83D500F80552 /* HTTPRequest.m in Sources */,
 				D0F252FB195F820D00F80552 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -319,7 +385,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -336,6 +402,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				WARNING_CFLAGS = "-w";
 			};
 			name = Debug;
 		};
@@ -358,7 +425,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -368,6 +435,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
+				WARNING_CFLAGS = "-w";
 			};
 			name = Release;
 		};
@@ -456,6 +524,7 @@
 				D0F2531F195F820D00F80552 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		D0F25320195F820D00F80552 /* Build configuration list for PBXNativeTarget "LiberObjcExampleTests" */ = {
 			isa = XCConfigurationList;
@@ -464,6 +533,7 @@
 				D0F25322195F820D00F80552 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

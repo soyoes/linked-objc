@@ -28,6 +28,10 @@
 #define logSize(name,size) (NSLog(@"--\nRECT:%@ = (%f,%f) \n--",(name),(size.width),(size.height)))
 #define logPoint(name,p) (NSLog(@"--\nRECT:%@ = (%f,%f) \n--",(name),(p.x),(p.y)))
 
+#define m_FILL 0
+#define m_FIT 1
+#define m_CROP_FIT 2
+#define m_ORG 3
 
 typedef struct{
     float   x;  //left
@@ -66,6 +70,8 @@ typedef struct{
             outlineWidth;
             //@see outline
     
+    int     contentMode;//m_FIT/m_FILL/m_CROP
+    
     float   scaleX, scaleY;//<0.00 & <x
     float   rotate;
             //formart : degree in float
@@ -95,9 +101,11 @@ typedef struct{
             //format : true
     bool    editable;
             //format : true, if clicked, add dynamical textfield automatically
+    
+    
     char *  placeHolder;
             //=css placeholder
-    
+    NSString * ID;
 
 }Styles;
 
