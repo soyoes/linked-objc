@@ -181,18 +181,27 @@ void manipulate_example($& target){
 void layers_example($& target){
     NSLog(@"motion");
     GestureHandler layerHandler =^(GR *g, $& o, Dic *p) {o.setText([NSString stringWithFormat:@"Tapped\n%@",o.ID]);};
+    
+    label(@"Tap the white rectangles",{.x=10,.y=10,.textAlign="center",.bgcolor="#00000000",.color="#ffffff"},&s_label) >> target;
+    
     //if you want to insert $ as layer,
     //you will have to finish your layer operations first before you do other things like >> or bind
     $& b = box({.ID=@"test"},&s_panel)
-    <(label(@"layer 1",{.x=10,.ID=@"Layer1"},&s_layer).bind(@"tap", layerHandler, @{}))
-    <(label(@"layer 2",{.x=110,.ID=@"Layer2"},&s_layer).bind(@"tap", layerHandler, @{}))
-    <(label(@"layer 3",{.x=210,.ID=@"Layer3"},&s_layer).bind(@"tap", layerHandler, @{}));
+    <(label(@"layer 1",{.x=10,.y=60,.ID=@"Layer1"},&s_layer).bind(@"tap", layerHandler, @{}))
+    <(label(@"layer 2",{.x=110,.y=60,.ID=@"Layer2"},&s_layer).bind(@"tap", layerHandler, @{}))
+    <(label(@"layer 3",{.x=210,.y=60,.ID=@"Layer3"},&s_layer).bind(@"tap", layerHandler, @{}));
     //insert layer 1~3 as sublayers but not subview to b, and bind a tap event to each layer.
     //while for this moment only @"tap" is supported for layers.
-    
     b>>target;
     
-    label(@"Tap the white rectangles",{.x=10,.y=300,.textAlign="center",.bgcolor="#00000000",.color="#ffffff"},&s_label) >> target;
+    //rotate layers
+    $& r = box({.x=-50,.y=200,.w=300,.h=100,.bgcolor="#ffffff88",.rotate3d="-45,0,1,0,300,0.5,0.5"})
+    <(label(@"layer 1",{.x=20,.y=10,.ID=@"Layer1"},&s_layer).bind(@"tap", layerHandler, @{}))
+    <(label(@"layer 2",{.x=120,.y=10,.ID=@"Layer2"},&s_layer).bind(@"tap", layerHandler, @{}))
+    <(label(@"layer 3",{.x=220,.y=10,.ID=@"Layer3"},&s_layer).bind(@"tap", layerHandler, @{}));
+    r>>b;
+    
+    
 }
 
 //Animations(Motions)
