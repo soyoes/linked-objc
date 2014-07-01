@@ -102,9 +102,6 @@ void lazy_loading_example($& target){
         <<glabel(@"http://ip.jsontest.com", ^NSString*(id res) {
             return res[@"ip"];                                                   //this will be set after loading
         },{.y=10+35*(i++)},&s_label).setDefaultText(@"Loading from remote ...")  //this will be shown as default/loading message.
-        
-        <<img(@"http://miriadna.com/desctopwalls/images/min/Walking-in-forest.jpg",{.y=10+35*(i++),.h=200},&s_label)
-
         <<img(@"http://miriadna.com/desctopwalls/images/min/Walking-in-forest.jpg",{.y=10+35*(i++),.h=200},&s_label);
     
 

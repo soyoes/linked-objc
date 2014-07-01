@@ -26,8 +26,11 @@
     @"Animations(Transform)"]
 
 $* _panel;
+bool panel_presented;
 
 void list_item_tapped(UIView * target, int i){
+    
+    if(panel_presented)return;
     
     //Up date title row.
     //get title row with ID, under namespace of @"ViewController"
@@ -38,6 +41,7 @@ void list_item_tapped(UIView * target, int i){
         if(_panel)_panel->remove();
         //release this label btn
         btn.remove();
+        panel_presented = false;
     }, @{});
     
     //add a panel to the screen
@@ -57,6 +61,7 @@ void list_item_tapped(UIView * target, int i){
         drawing_funcs[i](panel);
     
     _panel = &panel;
+    panel_presented = true;
 
 }
 

@@ -1045,22 +1045,30 @@ $& $::setImage(id _src){
     if([_src isKindOfClass:[NSString class]]){
         if([_src hasPrefix:@"http:"]||[_src hasPrefix:@"https:"]||[_src hasPrefix:@"ftp:"]){//URL
             src = _src;
-            dispatch_async(dispatch_get_main_queue(), ^{
+            cout << "set url" << endl;
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+                cout << "fetch url" << endl;
                 NSError* error = nil;
                 NSData* data = [NSData dataWithContentsOfURL:[NSURL URLWithString:src] options:NSDataReadingUncached error:&error];
                 if(data&&!error){
-                    this->setImage([UIImage imageWithData:data]);
+                    dispatch_sync(dispatch_get_main_queue(), ^{
+                        this->setImage([UIImage imageWithData:data]);
+                    });
                 }else{
                     NSLog(@"Failed To Load Image From URL:%@",src);
                 }
                 src = nil;
             });
         }else if([_src hasPrefix:@"assets-library:"]){//asset
-            dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
                 src = _src;
                 @autoreleasepool {
                     [UIImage loadImageFromAssetURL:[NSURL URLWithString:src] handler:^(UIImage *im,NSDictionary *p) {
-                        this->setImage(im);
+                        dispatch_sync(dispatch_get_main_queue(), ^{
+                            //this->setImage([UIImage imageWithData:data]);
+                            this->setImage(im);
+                        });
+                        //this->setImage(im);
                         im = nil;
                     } params:@{}];
                 }
