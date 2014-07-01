@@ -81,8 +81,8 @@ typedef struct{
             //format : degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
             //example : 45,1,0,0,500,0.5,1
 
-    char *  flip;
-            //format : 'H' | 'V'
+    char*   flip;
+            //flip 'H'=horizontal, 'V'=vertical
     
     float   padding, paddingLeft, paddingTop, paddingRight, paddingBottom;
             //working with label(text,...) only

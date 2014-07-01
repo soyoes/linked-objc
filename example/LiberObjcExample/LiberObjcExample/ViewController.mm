@@ -11,7 +11,7 @@
 
 #import "View.h"
 #import "style_sheet.h"
-
+#import <iostream>
 #import "examples.h"
 
 #define EXAMPLES @[@"Examples", \
@@ -21,6 +21,7 @@
     @"Lazy loading",            \
     @"Actions",                 \
     @"Manipulate",              \
+    @"Layers",                  \
     @"Animations(Motions)",     \
     @"Animations(Transform)"]
 
@@ -32,13 +33,11 @@ void list_item_tapped(UIView * target, int i){
     //get title row with ID, under namespace of @"ViewController"
     $* title_row = $::getView(@"LI_0", @"ViewController");
     //add back btn to title row
-    *title_row << label(@"Back",{.ID=@"back_btn"},&s_list_title_btn).bind(@"tap", ^(GR *g, Dic *p) {
+    *title_row << label(@"Back",{.ID=@"back_btn"},&s_list_title_btn).bind(@"tap", ^(GR *g, $& btn, Dic *p) {
         //release panel
         if(_panel)_panel->remove();
-        //get View object from UIGestureRecogonizor
-        View * btn = g.view;
         //release this label btn
-        btn.owner->remove();
+        btn.remove();
     }, @{});
     
     //add a panel to the screen
@@ -50,11 +49,11 @@ void list_item_tapped(UIView * target, int i){
          .startMove();                                  //start the animation
     
     //add contents here
-    static example_func* drawing_funcs[8] = {
+    static example_func* drawing_funcs[9] = {
         boxes_example,images_example,labels_example,lazy_loading_example,
-        actions_example,manipulate_example,motion_example,animation_example
+        actions_example,manipulate_example,layers_example,motion_example,animation_example
     };
-    if(i<8)
+    if(i<9)
         drawing_funcs[i](panel);
     
     _panel = &panel;
@@ -72,7 +71,7 @@ void list_item_tapped(UIView * target, int i){
         //Set unique ID for each row.
         Str * ID = [NSString stringWithFormat:@"LI_%d",i];
         return label((Str*)item, {.y=i*45.0f+1, .ID=ID}, i==0?&s_list_title:&s_list_row)
-                .bind(@"tap", ^(GR *gesture, Dic *params) {
+                .bind(@"tap", ^(GR *gesture, $& v, Dic *params) {
                     Str * item = params[@"item"];
                     int i = [params[@"i"] intValue];
                     if(i>0) list_item_tapped(self.view, i-1);

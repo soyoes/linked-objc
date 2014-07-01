@@ -21,7 +21,7 @@
 #import <QuartzCore/QuartzCore.h>
 #import <mach/mach.h>
 #import <mach/mach_host.h>
-
+#include <stdlib.h>
 
 using namespace std;
 
@@ -50,7 +50,7 @@ NSMutableDictionary * __datas=nil;
         if(handler){
             View * v = (View*)ges.view;
             NSDictionary *params = [v.data valueForKey:@"gestureData"];
-            handler(ges, params);
+            handler(ges, *_owner, params);
             //[v.data removeObjectForKey:@"gestureData"];
             params=nil;
         }
@@ -94,6 +94,10 @@ NSMutableDictionary * __datas=nil;
     }
 }
 
++ (Class) layerClass{
+    return [Layer class];
+}
+
 #pragma mark delegate of textField
 // may be called if forced even if shouldEndEditing returns NO (e.g. view removed from window) or endEditing:YES called
 - (void)textFieldDidEndEditing:(UITextField *)textField{
@@ -124,6 +128,26 @@ NSMutableDictionary * __datas=nil;
 -(BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
     return YES;
 }
+
+@end
+
+#pragma mark - Layer
+@implementation Layer
+@synthesize asSubLayer;
+- (BOOL)containsPoint:(CGPoint)thePoint{
+    return (asSubLayer)? NO:
+        [super containsPoint:thePoint];
+}
+/*
+- (void)layoutSublayers{
+    //cout << "resize layer" << endl;
+    for(CALayer *l in self.sublayers){
+        if(l.frame.origin.x==0 && l.frame.origin.y==0
+           && l.frame.size.width==self.bounds.size.width && l.frame.size.height==self.bounds.size.height){
+            l.frame=self.bounds;
+        }
+    }
+}*/
 
 @end
 
@@ -193,6 +217,51 @@ CGPathRef SVG::path(const char* svgpathcmd){
     return path;
 }
 
+#pragma mark - $deltas
+typedef float delta_f(float);
+float delta_linear(float progress){return progress;}
+float delta_quad(float progress){return pow(progress, 2);}
+float delta_quad5(float progress){return pow(progress, 5);}
+float delta_circ(float progress){return 1 - sin(acos(progress));}
+float delta_back(float progress){float x=1.5;return pow(progress, 2) * ((x + 1) * progress - x);}
+float delta_bounce(float progress){for(float a=0, b=1; 1; a+=b, b/=2) {if(progress >= (7-4*a)/11)return pow(b, 2)-pow((11-6*a-11*progress)/4,2);}}
+float delta_elastic(float progress){float x = 0.1;return pow(2, 10 * (progress-1)) * cos(20*M_PI*x/3*progress);}
+
+map<NSString*, delta_f*> delta_funcs = {
+	{@"linear",delta_linear},
+	//accelerator2x     :o > >> >>> >>>> >>>>>
+	{@"quad",delta_quad},
+	//accelerator5x     :o > >>> >>>>> >>>>>>> >>>>>>>>>>>
+	{@"quad5",delta_quad5},
+	//throwing          :o >> > ... > >> >>> >>>>
+	{@"circ",delta_circ},
+	//bow - arrow       :<< < o > >> >>> >>>>
+	{@"back",delta_back},
+	//bounce            :< > < > < > o > >> >>> >>>>
+	{@"bounce",delta_bounce},
+	//elastic           :< > << >> <<< >>> o > >> >>> >>>>
+	{@"elastic",delta_elastic},
+};
+
+float style_easeOut(NSString* deltaname, float progress){
+    delta_f* func = delta_funcs[deltaname];
+    return 1-func(1-progress);
+}
+float style_easeInOut(NSString* deltaname, float progress){
+    delta_f* func = delta_funcs[deltaname];
+    return (progress<=0.5) ? func(2*progress)/2 : (2-func(2*(1-progress)))/2;
+}
+typedef float style_f(NSString*, float);
+map<NSString*, style_f*> style_funcs = {
+    // reverse
+	{@"easeOut",style_easeOut},
+    // repeat 0~50% and reverse.
+	{@"easeInOut",style_easeInOut}
+};
+
+
+
+
 #pragma mark - $
 
 
@@ -214,11 +283,13 @@ $::~$(){
         contentLayer=nil;
         textLayer=nil;
         shapeLayer=nil;
+        subLayers=nil;
         
         animator =nil;
         behaviors=nil;
         dummys=nil;
         ID=nil;
+        NS=nil;
         released=true;
     }
 }
@@ -233,13 +304,16 @@ $* $::initView(Styles s){
     layer = view.layer;
     layer.zPosition = styles.z;
     
+    /*
     transLayer = [CATransformLayer layer];
     transLayer.frame = view.bounds;
     [layer addSublayer:transLayer];
+    */
     
     contentLayer = [CALayer layer];
     contentLayer.frame = view.bounds;
-    [transLayer addSublayer:contentLayer];
+    //[transLayer addSublayer:contentLayer];
+    [layer addSublayer:contentLayer];
     
     if(styles.ID)ID = styles.ID;
     registerView(this);
@@ -256,19 +330,48 @@ $& $::setStyle(Styles s){
         initView(s);
     
     Styles ss = initedBeforeSetting? s: styles;
+    
+    if(ss.padding){
+        ss.paddingLeft=ss.padding;
+        ss.paddingTop=ss.padding;
+        ss.paddingRight=ss.padding;
+        ss.paddingBottom=ss.padding;
+    }
 
     //CALayer *_layer = shapeLayer?shapeLayer:contentLayer;
     layer.opacity = (1-ss.alpha);
     
-    if(initedBeforeSetting){
-        float ww = ss.w ? ss.w : styles.w;
-        float hh = ss.h ? ss.h : styles.h;
-        if(ss.x!=styles.x || ss.y!=styles.y){
-            view.center=CGPointMake(ss.x+ww/2, ss.y+hh/2);
+    if(initedBeforeSetting && (s.x||s.y||s.w||s.h)){
+        float ww = s.w ? s.w : styles.w;
+        float hh = s.h ? s.h : styles.h;
+        float xx = s.x ? s.x : styles.x;
+        float yy = s.y ? s.y : styles.y;
+        view.frame = {{xx,yy},{ww,hh}};
+        layer.frame = {{xx,yy},{ww,hh}};
+        contentLayer.frame = layer.bounds;
+        
+        /*
+        if((s.x&&s.x!=styles.x) || (s.y&&s.y!=styles.y) ){
+            view.center=CGPointMake(xx+ww/2, yy+hh/2);
         }
-        if(ss.w||ss.h){
+        
+        if(s.w||s.h){
+            cout << "RESIZING:" << ww<<","<<hh << endl;
             view.bounds = CGRectMake(0, 0, ww, hh);
-        }
+            view.backgroundColor = [UIColor blackColor];
+            layer.bounds = view.bounds;
+            layer.backgroundColor = [UIColor redColor].CGColor;
+            //transLayer.bounds = view.bounds;
+            contentLayer.bounds = view.bounds;
+            contentLayer.backgroundColor = [UIColor purpleColor].CGColor;
+            
+            /*
+            transLayer.bounds = view.bounds;
+            contentLayer.bounds = view.bounds;
+            if(shapeLayer)shapeLayer.bounds = view.bounds;
+            if(textLayer)textLayer.bounds = {{ss.paddingLeft,ss.paddingTop},{ww-ss.paddingLeft-ss.paddingRight, hh-ss.paddingTop-ss.paddingBottom}};
+         
+        }*/
     }
     
     if(ss.bgcolor){
@@ -280,6 +383,7 @@ $& $::setStyle(Styles s){
                 contentLayer.backgroundColor = [UIColor clearColor].CGColor;
             }else
                 contentLayer.backgroundColor=str2color(ss.bgcolor).CGColor;
+
         }
     }
     
@@ -299,14 +403,6 @@ $& $::setStyle(Styles s){
         contentLayer.cornerRadius = styles.cornerRadius;
         contentLayer.masksToBounds=YES;
     }
-    
-    if(ss.padding){
-        ss.paddingLeft=ss.padding;
-        ss.paddingTop=ss.padding;
-        ss.paddingRight=ss.padding;
-        ss.paddingBottom=ss.padding;
-    }
-    
     
     if(ss.outline){
         this->drawOutline(str(ss.outline));
@@ -356,12 +452,12 @@ $& $::setStyle(Styles s){
             i++;
         }while(end != string::npos);
         
-        transLayer.anchorPoint = CGPointMake(parts[5], parts[6]);
+        layer.anchorPoint = CGPointMake(parts[5], parts[6]);
         CATransform3D rt = CATransform3DIdentity;
         rt.m34 = 1.0f / (-1*parts[4]);
         rt = CATransform3DRotate(rt, radians(parts[0]), parts[1], parts[2], parts[3]);
         rt = CATransform3DTranslate(rt, parts[7], parts[8], parts[9]);
-        transLayer.transform = rt;//CATransform3DConcat
+        layer.transform = rt;//CATransform3DConcat
     }
     
     if(initedBeforeSetting) *&styles = style(&s, &styles);
@@ -405,13 +501,13 @@ $& $::unbind(NSString* event){
 }
 
 $& $::dragable(GestureHandler onDrag, GestureHandler onEnd){
-    this->bind(@"pan",^(GR *ges, Dic *params) {
+    this->bind(@"pan",^(GR *ges,$& v, Dic *params) {
         UIPanGestureRecognizer * r = (UIPanGestureRecognizer *) ges;
         View *m = r.view;
         if(r.state == UIGestureRecognizerStateEnded){
             [m.data removeObjectForKey:@"diffX"];
             [m.data removeObjectForKey:@"diffY"];
-            onEnd(r,params);
+            onEnd(r,v,params);
         }else{
             CGPoint trans = [r translationInView:view];
             if(![m.data valueForKey:@"diffX"]){
@@ -419,7 +515,7 @@ $& $::dragable(GestureHandler onDrag, GestureHandler onEnd){
                 [m.data setValue:@(trans.y-m.owner->view.center.y) forKey:@"diffY"];
             }
             m.owner->view.center = CGPointMake(trans.x-[[m.data valueForKey:@"diffX"] floatValue], trans.y-[[m.data valueForKey:@"diffY"] floatValue]) ;
-            onDrag(r,params);
+            onDrag(r,v,params);
         }
     },@{});
     return *this;
@@ -431,6 +527,7 @@ CGRect $::rect(){
 
 void $::remove(){
     if(view)[view removeFromSuperview];
+    $::removeView(this);
     delete this;
 }
 
@@ -583,10 +680,109 @@ $& $::addCollision(Dic *opt){
     return *this;
 }
 
+
+$& $::animate(float ms, Styles s){return *this;}
+$& $::animate(float ms, Styles s, AnimateFinishedHandler onEnd){return *this;}
+$& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd){return *this;}
+$& $::animate(float ms, Styles s, Dic* opts){return *this;}
+$& $::animate(float ms, Styles s, AnimateFinishedHandler onEnd, Dic* opts){return *this;}
+$& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd, Dic*opts){
+    //var ele = this;
+    if(opts[@"delay"]){
+        float delay = [opts[@"delay"] floatValue];
+        MDic * newOpt = [MDic dictionaryWithDictionary:opts];
+        [newOpt removeObjectForKey:@"delay"];
+        $setTimeout(delay,^void(Dic*d){
+            if(d[@"o"]){
+                $* o = ($*)[d[@"o"] pointerValue];
+                o->animate(ms, d[@"onStep"], d[@"onEnd"], d[@"opts"]);
+            }}, @{@"o":[NSValue valueWithPointer:this], @"opts":newOpt, @"onStep":onStep, @"onEnd":onEnd, @"ms":@(ms)});
+        return *this;
+    }
+    long long start = milliseconds();
+    NSString* delta_func_name = opts[@"delta"]?opts[@"delta"]:@"linear";
+    NSString* style_func = opts[@"style"]?opts[@"style"]:@"easeIn";
+    const float interval = 16;
+    int times = ms/interval;
+    $setInterval(interval, ^BOOL(NSDictionary*d, int i){
+        long long start = [d[@"start"] longLongValue];
+        float duration = [d[@"duration"] floatValue];
+        long long current = milliseconds();
+        long passed = current - start;
+        float progress = passed / duration;
+        if (progress > 1) progress = 1;
+        
+        
+        NSString* deltaname =d[@"delta_func"];
+        
+        delta_f* deltaf = delta_funcs[deltaname];
+        
+        float delta;
+        
+        if(![d[@"style_func"] isEqualToString:@"easeIn"]){
+            style_f* stylef = style_funcs[d[@"style_func"]];
+            delta = stylef(d[@"delta_func"],progress);
+        }else{
+            delta = deltaf(progress);
+        }
+        
+        $* o = ($*) [d[@"o"] pointerValue];
+        
+        if(d[@"onStep"]){
+            AnimateStepHandler onstep = d[@"onStep"];
+            onStep(*o, delta);
+        }
+        int times = [d[@"times"] intValue];
+        return (progress >= 1 || i>times) ? NO:YES;
+                
+    }, @{@"o":[NSValue valueWithPointer:this],@"times":@(times), @"start":@(start), @"duration":@(ms), @"delta_func":delta_func_name, @"style_func":style_func, @"onStep":onStep, @"onEnd":onEnd});
+    
+    return *this;
+}
+
+
 #pragma mark $ operator
 
 __attribute__((overloadable)) $& $::operator>>($& p){
+    cout << [ID UTF8String] << " >> " << [p.ID UTF8String] << endl;
     if(&p){
+        if(subLayers){
+            BOOL hasSubHandler = NO;
+            for (NSValue*v in subLayers) {
+                $* vp =($*)[v pointerValue];
+                ((Layer*)vp->layer).asSubLayer = YES;
+                [layer addSublayer:vp->layer];
+                if(vp->view.gestures && vp->view.gestures[@"tap"]){
+                    hasSubHandler = YES;
+                }
+            }
+            Dic * parentHit = view.gestures&&view.gestures[@"tap"]?@{@"parentHit":view.gestures[@"tap"]}:@{};
+            if(hasSubHandler){
+                unbind(@"tap").
+                bind(@"tap", ^(GR *g,$& o, Dic *p) {
+                    CGPoint coords = [g locationInView:g.view];
+                    //logPoint(@"click at", coords);
+                    int size = o.subLayers?[o.subLayers count]:0;
+                    BOOL hitSub = NO;
+                    for (int i=size-1; i>=0; i--) {
+                        $* sp = ($*)[o.subLayers[i] pointerValue];
+                        if(CGRectContainsPoint(sp->layer.frame, coords)){
+                            NSLog(@"id=%@",sp->ID);
+                            if(sp->view.gestures[@"tap"]){
+                                GestureHandler subHandler =sp->view.gestures[@"tap"];
+                                subHandler(g,*sp,@{});
+                                hitSub = YES;
+                                break;
+                            }
+                        }
+                    }
+                    if(!hitSub&&p[@"parentHit"]){
+                        GestureHandler parentHandler =p[@"parentHit"];
+                        parentHandler(g,o,@{});
+                    }
+                }, parentHit);
+            }
+        }
         [p.view addSubview:view];
         if(src)setImage(src);
         parent = &p;
@@ -596,6 +792,8 @@ __attribute__((overloadable)) $& $::operator>>($& p){
     return *this;
 }
 __attribute__((overloadable)) $& $::operator>>(UIView*p){
+    cout << [ID UTF8String] << " >> UIVIEW" << endl;
+    //FIXME solve sublayers
     if(p){[p addSubview:view];if(src)setImage(src);}
     return *this;
 }
@@ -609,6 +807,23 @@ $* $::operator[](int idx){
         return ($*)[[nodes objectAtIndex:idx] pointerValue];
     }
     return NULL;
+}
+
+//insert layer into super
+$& $::operator>($&p){
+    if(&p){
+        //[p.layer addSublayer:layer];
+        if(src)setImage(src);
+        parent = &p;
+        if(!p.subLayers)p.subLayers = [[NSMutableArray alloc] init];
+        [p.subLayers addObject:[NSValue valueWithPointer:this]];
+    }
+    return *this;
+}
+//append layer
+$& $::operator<($&p){
+    p > *this;
+    return *this;
 }
 
 #pragma mark $ data
@@ -784,6 +999,7 @@ void $::drawOutline(NSString * outline){
     [contentLayer addSublayer:olayer];
     olayer = nil;oColor = nil;
 }
+
 
 #pragma mark $ svg
 
@@ -1063,7 +1279,7 @@ $& $::setEditable(BOOL editable){
         }
         view.textField.hidden = YES;
     }
-    this->bind(@"tap", ^void (UIGestureRecognizer*ges, NSDictionary*params){
+    this->bind(@"tap", ^void (UIGestureRecognizer*ges, $& o, NSDictionary*params){
         View *v = (View *)ges.view;
         [v switchEditingMode];
     },nil);
@@ -1079,13 +1295,8 @@ int $::s_views_idx = 0;
  */
 $* $::getView(NSString * _ID, NSString *ctrlerName){
     //NSString * cName = __controllerName?__controllerName:@"__DEFAULT__";
-    if(s_views && s_views[ctrlerName])
-        for (NSValue *va in s_views[ctrlerName]) {
-            $* v = ($*)[va pointerValue];
-            if([_ID isEqualToString: v->ID]){
-                return v;
-            }
-        }
+    if(s_views && s_views[ctrlerName] && s_views[ctrlerName][_ID])
+        return ($*)[s_views[ctrlerName][_ID] pointerValue];
     return nullptr;
 }
 /*
@@ -1105,19 +1316,34 @@ void $::clearAll(NSString *ctrlerName){
 void $::setControllerName(NSString *controllerName){
     s_controllerName = controllerName;
 }
-    
+
+/*
+ private static
+ 
+ */
+void $::removeView($* vp){
+    if(!vp || !vp->ID || !vp->NS)
+        return;
+    if(s_views && s_views[vp->NS])
+       [s_views[vp->NS] removeObjectForKey:(NSString*)(vp->ID)];
+}
+
+/*
+ private static
+ 
+ */
 void $::registerView($* vp){
     if(!s_views){
         s_views = [[NSMutableDictionary alloc] init];
     }
     NSString * cName = s_controllerName?s_controllerName:@"__DEFAULT__";
     if(!s_views[cName])
-        s_views[cName] = [[NSMutableArray alloc] init];
+        s_views[cName] = [[NSMutableDictionary alloc] init];
     s_views_idx++;
     if(!vp->ID)vp->ID = [NSString stringWithFormat:@"%@_%d",(vp->src?@"IMG":@"BOX"),s_views_idx];
+    vp->NS = cName;
+    s_views[cName][vp->ID] = [NSValue valueWithPointer:vp];
     //NSLog(@"Register view : %@",vp->ID);
-    [s_views[cName] addObject:[NSValue valueWithPointer:vp]];
-    
 }
 
     
@@ -1234,7 +1460,7 @@ void memuse(const char* msg) {
     NSLog(@"MEM : %@ %u KB",[NSString stringWithUTF8String:msg],info.resident_size/1024);
 }
 
-NSString * str(char * cs){return cs!=nil?[NSString stringWithFormat:@"%s",cs]:nil;}
+NSString * str(char * cs){return cs!=nil?[NSString stringWithCString:cs encoding:NSASCIIStringEncoding]:nil;}
 
 char * cstr(NSString * cs){
     return const_cast<char*>([cs UTF8String]);
@@ -1264,6 +1490,26 @@ UIColor * str2color(char * s){
         return [UIColor colorWithRed:clr[0] green:clr[1] blue:clr[2] alpha:clr[3]];
     }
     return [UIColor colorWithWhite:0 alpha:0];
+}
+
+char* dec2hex(int dec, int bits){
+    ostringstream ss;
+    ss<< std::hex << dec;
+    string st = ss.str();
+    while(st.length()<bits)
+        st = "0"+st;
+    char *cstr = new char[bits+1];
+    strcpy(cstr, st.c_str());
+    return const_cast<char*>(cstr);
+}
+
+char * colorstr(int r, int g, int b, int a){
+    char * ar=dec2hex(MIN(r,255),2), *ag=dec2hex(MIN(g,255),2), *ab=dec2hex(MIN(b,255),2), *aa=dec2hex(MIN(a,255),2);
+    NSString *s = [NSString stringWithFormat:@"#%@%@%@%@",str(ar),str(ag),str(ab),str(aa)];
+    return cstr(s);
+}
+char * colorfstr(float r, float g, float b, float a){
+    return colorstr(r*255, g*255, b*255, a*255);
 }
 
 /*
@@ -1454,6 +1700,13 @@ Styles str2style(char * s){
     return s0;
 }
 
+//milliseconds
+long long milliseconds(){
+    return (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+}
+
+MDic* __counters;
+
 #pragma mark time
 void $setTimeout(float millisec, TimeoutHandler block, NSDictionary*dic){
     dispatch_time_t span = dispatch_time(DISPATCH_TIME_NOW, millisec*0.001f * NSEC_PER_SEC);
@@ -1467,16 +1720,26 @@ void $setTimeout(float millisec, TimeoutHandler block, NSDictionary*dic){
  $& __block ico = $ico(@"train",{0,30}) >> self.view;
  $setInterval(40, ^BOOL(NSDictionary*d, int i){
  ico.view.center = CGPointMake(i*10, 30);   //move this ico
- return (i>100) ? @NO:@YES; // exec for 100 times.
+ return (i>100) ? NO:YES; // exec for 100 times.
  }, @{});
  
  */
 void $setInterval(float millisec, TimeIntervalHandler block, NSDictionary*dic){
-    static int counter=0;
+    if(!__counters) __counters=[[MDic alloc] init];
+    id vp =block;
+    if(!__counters[vp])
+        __counters[vp]=@0;
+
     dispatch_time_t span = dispatch_time(DISPATCH_TIME_NOW, millisec*0.001f * NSEC_PER_SEC);
     dispatch_after(span, dispatch_get_main_queue(), ^(void){
-        if(block(dic, counter++)) $setInterval(millisec, block, dic);
-        else counter=0;
+        int counter = [__counters[vp] intValue];
+        if(block(dic, counter++)) {
+            $setInterval(millisec, block, dic);
+            __counters[vp] = @(counter);
+        }else {
+            [__counters removeObjectForKey:vp];
+        }
+        
     });
 }
 

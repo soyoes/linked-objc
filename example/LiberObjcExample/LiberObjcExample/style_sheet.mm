@@ -23,3 +23,5 @@ Styles s_panel={10,0,300,500};
 Styles s_box={.w=80,.h=80,.color="#000000",.bgcolor="#ffffff",.font=FONT_DEFAULT};
 
 Styles s_label={.w=300,.h=30,.paddingTop=5,.paddingLeft=10,.color="#000000",.bgcolor="#ffffff",.font=FONT_DEFAULT};
+
+Styles s_layer={.x=10,.y=20,.w=60,.h=60,.bgcolor="#ffffff",.color="#000000",.font=FONT_DEFAULT,.paddingTop=16,.textAlign="center"};

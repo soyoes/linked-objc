@@ -31,6 +31,9 @@ void actions_example($& target);
 //Manipulate
 void manipulate_example($& target);
 
+//Layers
+void layers_example($& target);
+
 //Animations(Motions)
 void motion_example($& target);
 

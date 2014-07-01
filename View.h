@@ -20,11 +20,17 @@
 #ifndef VIEW_H
 #define VIEW_H
 @class View;
+@class Layer;
 
+class $;
 
 extern NSMutableDictionary * __datas;
+extern NSMutableDictionary * __counters;
 
-typedef void(^GestureHandler)(GR*, Dic*);
+typedef void(^GestureHandler)(GR*, $&, Dic*);
+typedef void(^AnimateStepHandler)($&, float);
+typedef void(^AnimateFinishedHandler)($&);
+
 
 typedef struct{
     char cmd;
@@ -47,8 +53,9 @@ public:
     View       * view;             //a uiview extension which can save data and response to UIGesture.
     //Mask        * mask;           //a mask to respond
     NSString    * ID;               //unique id of this View.
+    NSString    * NS;               //namespace.
     
-    CALayer     * layer;            //base layer
+    Layer     * layer;            //base layer
     CATransformLayer * transLayer;  //container layer to perform 3d transfrom
     
     CALayer      * contentLayer;    //visible layer, contains bg color and other styles.
@@ -56,6 +63,8 @@ public:
     CALayer      * imageLayer;      //1st sublayer of contentLayer, contains image data
     CAShapeLayer * shapeLayer;      //2nd sublayer of contentLayer, shape mask
     CATextLayer  * textLayer;       //3rd sublayer of contentLayer, text
+    
+    NSMutableArray  *subLayers;
 
     UIDynamicAnimator   * animator;
     NSMutableArray      * behaviors;
@@ -98,9 +107,20 @@ public:
     //TODO $&
     //TODO remove ...
     
+    __attribute__((overloadable)) $& animate(float ms, Styles s);
+    __attribute__((overloadable)) $& animate(float ms, Styles s, AnimateFinishedHandler onEnd);
+    __attribute__((overloadable)) $& animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd);
+    __attribute__((overloadable)) $& animate(float ms, Styles s, Dic* opts);
+    __attribute__((overloadable)) $& animate(float ms, Styles s, AnimateFinishedHandler onEnd, Dic* opts);
+    __attribute__((overloadable)) $& animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd, Dic*opts);
+    
     __attribute__((overloadable)) $& operator>>($&p);   //insert into super
     __attribute__((overloadable)) $& operator>>(UIView *p); //insert into super
     __attribute__((overloadable)) $& operator<<($&p); // append child
+    
+    __attribute__((overloadable)) $& operator>($&p);   //insert layer into super
+    __attribute__((overloadable)) $& operator<($&p);   //append layer
+    
     $* operator[](int idx);//get child
     
     CGRect rect();
@@ -132,8 +152,8 @@ public:
     void setFontSize(float s);
     void switchEditingMode();
     $& setEditable(BOOL editable);
-    
     $& setContentSize(float x, float y);
+    void setBgcolor(id color);
     
     static NSMutableDictionary * s_views;
     static NSString * s_controllerName;
@@ -149,7 +169,8 @@ public:
 private:
     Styles styles;
     const char* svgPath;
-    static void registerView($* vp);
+    __attribute__((overloadable)) static void registerView($* vp);
+    __attribute__((overloadable)) static void removeView($* vp);
     bool released;
 };
 
@@ -164,6 +185,12 @@ private:
 -(void) gestureHandler:(UIGestureRecognizer*)ges;
 -(void) switchEditingMode;
 @end
+
+#pragma mark - Layer
+@interface Layer : CALayer
+@property (nonatomic, readwrite) BOOL asSubLayer;
+@end
+
 
 #pragma mark - CPP wrapper
 
@@ -226,11 +253,15 @@ __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handl
 NSString * str(char * cs);
 char * cstr(NSString * cs);
 UIColor * str2color(char * s);
+char * dec2hex(int dec, int bits);
+char * colorstr(int r, int g, int b, int a);
+char * colorfstr(float r, float g, float b, float a);
 bool strstarts(char* s1, const char* s2);
 bool strends(char* s1, const char* s2);
 bool strhas(char* s1, const char* s2);
 char * f2str(float f);
 char * strs(int num, char* s ,...);
+long long milliseconds();
 
 //styles
 Styles str2style(char * s);

@@ -8,11 +8,12 @@
 
 #include "examples.h"
 #include "style_sheet.h"
+#include <iostream>
 
 //Shapes with styles
 void boxes_example($& target){
     NSLog(@"boxes");
-    box(&s_panel)
+    $& a = box(&s_panel)
         //bgcolor
         <<box({.x=10,.y=10},&s_box)
         //transparent color RGBA
@@ -59,6 +60,19 @@ void images_example($& target){
         <<img(@"banff.jpg", {.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40},&s_box)
         //svg path fan with image background
         <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110},&s_box).setImage(@"banff.jpg")
+    
+        //rotate 3d
+        <<img(@"banff.jpg", {.x=10,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,1,0,0,200,0.5,1"},&s_box)
+        //rotate 2d
+        <<img(@"banff.jpg", {.x=110,.y=210,.contentMode=m_CROP_FIT,.rotate=45},&s_box)
+        //rotate 3d
+        <<img(@"banff.jpg", {.x=210,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,0,1,0,200,0.5,1"},&s_box)
+    
+        //flipH
+        <<img(@"banff.jpg", {.x=10,.y=310,.contentMode=m_CROP_FIT,.flip="H"},&s_box)
+        //flipV
+        <<img(@"banff.jpg", {.x=110,.y=310,.contentMode=m_CROP_FIT,.flip="V"},&s_box)
+    
         >>target;
 }
 
@@ -100,7 +114,7 @@ void lazy_loading_example($& target){
 void actions_example($& target){
     NSLog(@"actions");
     
-    GestureHandler handler =^(GR *g, Dic *p) {
+    GestureHandler handler =^(GR *g, $& v, Dic *p) {
         NSString *act =NSStringFromClass([g class]);
         $::getView(@"RES", @"ViewController")->setText([NSString stringWithFormat:@"Action:%@",act]);
         NSLog(act);
@@ -123,9 +137,9 @@ void actions_example($& target){
         >>panel;
     
     label(@"Drag me",{.ID=@"DRG",.x=120,.y=200,.bgcolor="#ffffff",.paddingTop=30,.textAlign="center"},&s_box)
-        .dragable(^(GR *g, Dic *p) {
+        .dragable(^(GR *g, $& v, Dic *p) {
             $::getView(@"DRG", @"ViewController")->setText(@"Dragging");
-        }, ^(GR *g, Dic *p) {
+        }, ^(GR *g, $& v, Dic *p) {
             $::getView(@"DRG", @"ViewController")->setText(@"Drag me");
         })>>panel;
 }
@@ -144,20 +158,19 @@ void manipulate_example($& target){
         
         //btn 1
         <<(label(@"Change YELLOW box to Purple", {.y=100+35*(i++)}, &s_label)
-           .bind(@"tap", ^(GR *, Dic *) {
+           .bind(@"tap", ^(GR *, $& v, Dic *) {
             $::getView(@"YELLOW", @"ViewController")->setStyle({.bgcolor="#FF00FF"});
         }, @{}))
         
         //btn 2
         <<(label(@"Hide RED box", {.y=100+35*(i++)}, &s_label)
-           .bind(@"tap", ^(GR *, Dic *) {
+           .bind(@"tap", ^(GR *, $& v, Dic *) {
             $::getView(@"RED", @"ViewController")->setStyle({.alpha=100});
         }, @{}))
     
         //btn 3
-        //BUG : remove twice
         <<(label(@"Remove BLUE box", {.y=100+35*(i++)}, &s_label)
-           .bind(@"tap", ^(GR *, Dic *) {
+           .bind(@"tap", ^(GR *, $& v, Dic *) {
             $* blue = $::getView(@"BLUE", @"ViewController");
             if(blue)blue->remove();
         }, @{}))
@@ -165,6 +178,24 @@ void manipulate_example($& target){
     
         >>target;
     
+}
+
+//Layers
+void layers_example($& target){
+    NSLog(@"motion");
+    GestureHandler layerHandler =^(GR *g, $& o, Dic *p) {o.setText([NSString stringWithFormat:@"Tapped\n%@",o.ID]);};
+    //if you want to insert $ as layer,
+    //you will have to finish your layer operations first before you do other things like >> or bind
+    $& b = box({.ID=@"test"},&s_panel)
+    <(label(@"layer 1",{.x=10,.ID=@"Layer1"},&s_layer).bind(@"tap", layerHandler, @{}))
+    <(label(@"layer 2",{.x=110,.ID=@"Layer2"},&s_layer).bind(@"tap", layerHandler, @{}))
+    <(label(@"layer 3",{.x=210,.ID=@"Layer3"},&s_layer).bind(@"tap", layerHandler, @{}));
+    //insert layer 1~3 as sublayers but not subview to b, and bind a tap event to each layer.
+    //while for this moment only @"tap" is supported for layers.
+    
+    b>>target;
+    
+    label(@"Tap the white rectangles",{.x=10,.y=300,.textAlign="center",.bgcolor="#00000000",.color="#ffffff"},&s_label) >> target;
 }
 
 //Animations(Motions)
@@ -175,8 +206,23 @@ void motion_example($& target){
 //Animations(Transform)
 void animation_example($& target){
     NSLog(@"animation");
-    box(&s_panel)
-    //aspect ratio fit
-    <<label(@"Preparing", {0,0,300,60})
+    $& p = box(&s_panel)
+    <<box({.ID=@"YELLOW",.x=10,.y=10,.bgcolor="#FFFFFF"},&s_box)
+    <<box({.ID=@"RED",.x=110,.y=10,.bgcolor="#FF0000"},&s_box)
+    <<box({.ID=@"BLUE",.x=210,.y=10,.bgcolor="#0000FF"},&s_box)
     >>target;
+    
+    p[0]->animate(1000, ^($ &o, float delta) {
+        o.setStyle({.bgcolor=colorfstr(1, 1, delta, 1)});
+    }, ^($& o) {NSLog(@"finished");}, @{});
+    
+    p[1]->animate(1000, ^($ &o, float delta) {
+        o.setStyle({.h=80+delta*400.0f});
+    }, ^($& o) {NSLog(@"finished");}, @{@"delta":@"quad"});
+    //return;
+    p[2]->animate(1000, ^($ &o, float delta) {
+        o.setStyle({.y=10+delta*400.0f});
+    }, ^($& o) {NSLog(@"finished");}, @{@"delta":@"bounce",@"style":@"easeInOut"});
+
+    
 }
