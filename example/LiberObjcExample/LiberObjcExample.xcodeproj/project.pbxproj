@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D06B018B195FACF00024FD47 /* examples.mm in Sources */ = {isa = PBXBuildFile; fileRef = D06B0189195FACF00024FD47 /* examples.mm */; };
-		D06B018E195FFE840024FD47 /* banff.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D06B018D195FFE840024FD47 /* banff.jpg */; };
+		D06F212C1963C5BE001BC6ED /* people.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D06F212B1963C5BE001BC6ED /* people.jpg */; };
 		D0F252EF195F820D00F80552 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252EE195F820D00F80552 /* Foundation.framework */; };
 		D0F252F1195F820D00F80552 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F0195F820D00F80552 /* CoreGraphics.framework */; };
 		D0F252F3195F820D00F80552 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F2195F820D00F80552 /* UIKit.framework */; };
@@ -45,7 +45,7 @@
 /* Begin PBXFileReference section */
 		D06B0189195FACF00024FD47 /* examples.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = examples.mm; sourceTree = "<group>"; };
 		D06B018A195FACF00024FD47 /* examples.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = examples.h; sourceTree = "<group>"; };
-		D06B018D195FFE840024FD47 /* banff.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = banff.jpg; sourceTree = "<group>"; };
+		D06F212B1963C5BE001BC6ED /* people.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = people.jpg; sourceTree = "<group>"; };
 		D0F252EB195F820D00F80552 /* LiberObjcExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiberObjcExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0F252EE195F820D00F80552 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D0F252F0195F820D00F80552 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -109,7 +109,7 @@
 		D06B018C195FFE840024FD47 /* images */ = {
 			isa = PBXGroup;
 			children = (
-				D06B018D195FFE840024FD47 /* banff.jpg */,
+				D06F212B1963C5BE001BC6ED /* people.jpg */,
 			);
 			name = images;
 			path = LiberObjcExample/images;
@@ -289,9 +289,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				D0F25307195F820D00F80552 /* Images.xcassets in Resources */,
-				D06B018E195FFE840024FD47 /* banff.jpg in Resources */,
 				D0F252F9195F820D00F80552 /* InfoPlist.strings in Resources */,
 				D0F25302195F820D00F80552 /* Main.storyboard in Resources */,
+				D06F212C1963C5BE001BC6ED /* people.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

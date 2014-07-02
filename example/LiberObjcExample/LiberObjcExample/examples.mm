@@ -48,30 +48,30 @@ void images_example($& target){
     NSLog(@"images");
     box(&s_panel)
         //aspect ratio fit
-        <<img(@"banff.jpg", {.x=10,.y=10,.contentMode=m_FIT},&s_box)
+        <<img(@"people.jpg", {.x=10,.y=10,.contentMode=m_FIT},&s_box)
         //crop and fit the rect size
-        <<img(@"banff.jpg", {.x=110,.y=10,.contentMode=m_CROP_FIT},&s_box)
+        <<img(@"people.jpg", {.x=110,.y=10,.contentMode=m_CROP_FIT},&s_box)
         //aspect ratio fill
-        <<img(@"banff.jpg", {.x=210,.y=10,.contentMode=m_FILL},&s_box)
+        <<img(@"people.jpg", {.x=210,.y=10,.contentMode=m_FILL},&s_box)
     
         //show center with original size
-        <<img(@"banff.jpg", {.x=10,.y=110,.contentMode=m_ORG},&s_box)
+        <<img(@"people.jpg", {.x=10,.y=110,.contentMode=m_ORG},&s_box)
         //img with round corner
-        <<img(@"banff.jpg", {.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40},&s_box)
+        <<img(@"people.jpg", {.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40},&s_box)
         //svg path fan with image background
-        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110},&s_box).setImage(@"banff.jpg")
+        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110},&s_box).setImage(@"people.jpg")
     
         //rotate 3d
-        <<img(@"banff.jpg", {.x=10,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,1,0,0,200,0.5,1"},&s_box)
+        <<img(@"people.jpg", {.x=10,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,1,0,0,200,0.5,1"},&s_box)
         //rotate 2d
-        <<img(@"banff.jpg", {.x=110,.y=210,.contentMode=m_CROP_FIT,.rotate=45},&s_box)
+        <<img(@"people.jpg", {.x=110,.y=210,.contentMode=m_CROP_FIT,.rotate=45},&s_box)
         //rotate 3d
-        <<img(@"banff.jpg", {.x=210,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,0,1,0,200,0.5,1"},&s_box)
+        <<img(@"people.jpg", {.x=210,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,0,1,0,200,0.5,1"},&s_box)
     
         //flipH
-        <<img(@"banff.jpg", {.x=10,.y=310,.contentMode=m_CROP_FIT,.flip="H"},&s_box)
+        <<img(@"people.jpg", {.x=10,.y=310,.contentMode=m_CROP_FIT,.flip="H"},&s_box)
         //flipV
-        <<img(@"banff.jpg", {.x=110,.y=310,.contentMode=m_CROP_FIT,.flip="V"},&s_box)
+        <<img(@"people.jpg", {.x=110,.y=310,.contentMode=m_CROP_FIT,.flip="V"},&s_box)
     
         >>target;
 }
@@ -207,6 +207,7 @@ void layers_example($& target){
 //Animations(Motions)
 void motion_example($& target){
     NSLog(@"motion");
+    
 }
 
 //Animations(Transform)
@@ -231,4 +232,26 @@ void animation_example($& target){
     }, ^($& o) {NSLog(@"finished");}, @{@"delta":@"bounce",@"style":@"easeInOut"});
 
     
+}
+
+//Animations(rotate delay)
+void animation_example2($& target){
+    NSLog(@"example2");
+    $& p = box(&s_panel) >> target;
+    for (int i=0; i<12; i++) {
+        $& cell = box({.x=10+i%3*100.0f,.y=600,.bgcolor="#FFFFFF"},&s_box) >> p;
+        cell.set(@"y", @(floor(i/3)*100+20));
+        cell.animate(1000, ^($ &o, float delta) {
+            CGRect r = o.rect();
+            float y = r.origin.y;
+            float targetY = [o.get(@"y") floatValue];
+            o.setStyle({.y=y+delta*(targetY-y)});
+        }, ^($& o) {
+            o.animate(1000, ^($& oo, float delta1) {
+                int degree =delta1*360;
+                NSString * rt = [NSString stringWithFormat:@"%d,0,1,0,300,0.5,0.5",degree];
+                oo.setStyle({.rotate3d=cstr(rt)});
+            }, ^($ &) {}, @{@"delta":@"linear"});
+        }, @{@"delta":@"quad",@"style":@"easeOut",@"delay":@(i*64+300)});//
+    }
 }

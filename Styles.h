@@ -45,6 +45,7 @@ typedef struct{
     //format(use hexcolor) : #336699CC //CC=alpha
     //format(use gradient) : #336699 #33CCFF
     //format(use gradient + location) : #336699:0 #3399CC:0.5 #33CCFF:1
+    //format(use gradient + location + degree) : #336699:0 #3399CC:0.5 #33CCFF:1 90
     char *  color;
     //color: text color
     //color format @see bgcolor,

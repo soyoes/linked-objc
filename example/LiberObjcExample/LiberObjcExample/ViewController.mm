@@ -23,7 +23,8 @@
     @"Manipulate",              \
     @"Layers",                  \
     @"Animations(Motions)",     \
-    @"Animations(Transform)"]
+    @"Animations(Transform)",    \
+    @"Animations(delay, rotation)"]
 
 $* _panel;
 bool panel_presented;
@@ -53,11 +54,12 @@ void list_item_tapped(UIView * target, int i){
          .startMove();                                  //start the animation
     
     //add contents here
-    static example_func* drawing_funcs[9] = {
+    static example_func* drawing_funcs[10] = {
         boxes_example,images_example,labels_example,lazy_loading_example,
-        actions_example,manipulate_example,layers_example,motion_example,animation_example
+        actions_example,manipulate_example,layers_example,motion_example,animation_example,
+        animation_example2
     };
-    if(i<9)
+    if(i<10)
         drawing_funcs[i](panel);
     
     _panel = &panel;

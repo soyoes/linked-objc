@@ -40,5 +40,8 @@ void motion_example($& target);
 //Animations(Transform)
 void animation_example($& target);
 
+//Animations(rotation delay)
+void animation_example2($& target);
+
 
 #endif /* defined(__LiberObjcExample__examples__) */

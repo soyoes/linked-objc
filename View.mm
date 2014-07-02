@@ -733,7 +733,10 @@ $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd,
             onStep(*o, delta);
         }
         int times = [d[@"times"] intValue];
-        return (progress >= 1 || i>times) ? NO:YES;
+        if(progress >= 1 || i>times){
+            onEnd(*o);
+            return NO;
+        }else return YES;
                 
     }, @{@"o":[NSValue valueWithPointer:this],@"times":@(times), @"start":@(start), @"duration":@(ms), @"delta_func":delta_func_name, @"style_func":style_func, @"onStep":onStep, @"onEnd":onEnd});
     
@@ -952,20 +955,26 @@ void $::drawGradient(NSString *value){
     
     NSMutableArray *colors=[NSMutableArray array];
     NSMutableArray *locations=[NSMutableArray array];
+    int degree = 0;
     for (int i=0;i<size; i++) {
         NSString *v = parts[i];
-        if([v contains:@":"]){
-            NSArray *vps = [v componentsSeparatedByString:@":"];
-            [colors addObject:(id)[vps[0] colorValue].CGColor];
-            [locations addObject:[NSNumber numberWithFloat:[vps[1] floatValue]]];
+        if(i<size-1){
+            if([v contains:@":"]){
+                NSArray *vps = [v componentsSeparatedByString:@":"];
+                [colors addObject:(id)[vps[0] colorValue].CGColor];
+                [locations addObject:[NSNumber numberWithFloat:[vps[1] floatValue]]];
+            }else{
+                [colors addObject:(id)[v colorValue].CGColor];
+                [locations addObject:[NSNumber numberWithFloat:((float)i/(float)(size-1))]];
+            }
         }else{
-            [colors addObject:(id)[v colorValue].CGColor];
-            [locations addObject:[NSNumber numberWithFloat:((float)i/(float)(size-1))]];
+            degree = [v intValue];
         }
     }
     gradient.colors = colors;
     gradient.locations = locations;
-    
+    if(degree)
+        gradient.affineTransform = CGAffineTransformMakeRotation(radians(degree));
     [layer insertSublayer:gradient atIndex:0];
 }
 
