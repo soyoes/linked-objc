@@ -1322,9 +1322,8 @@ $* $::getView(NSString * _ID, NSString *ctrlerName){
  */
 void $::clearAll(NSString *ctrlerName){
     if(s_views && s_views[ctrlerName]){
-        for (NSValue *va in s_views[ctrlerName]) {
-            $* v = ($*)[va pointerValue];
-            if(v && v->ID && !v->released)delete(v);
+        for (NSString *va in s_views[ctrlerName]) {
+            $* v = ($*)[s_views[ctrlerName][va] pointerValue];            if(v && v->ID && !v->released)delete(v);
         }
         [s_views[ctrlerName] removeAllObjects];
     }
