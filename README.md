@@ -26,7 +26,7 @@ Rock your OBJC like script language
     * .rotate3d = 45,1,0,0,500,0.5,1
     * text editing | display features: .nowrap ,.truncate, .editable
 * Support SVG path drawing
-* maker animation easier with UIDynamicAnimator
+* maker animation easier with UIDynamicAnimator or original animation engine.
 
 
 # Configuration
@@ -126,10 +126,9 @@ you can add this also.
       also you can use other gestures like @"pan",@"pinch",@"rotation",@"swipe",@"longPress",@"screenEdgePan",
     */
     label(@"Click Me", {0,200,200,50})
-      .bind(@"tap",^(UIGestureRecognizer *r, NSDictionary *p) {
+      .bind(@"tap",^(UIGestureRecognizer *r, $& v, NSDictionary *p) {
         NSLog(@"Your Param is %@",p[@"param1"]);
-        Mask* m = r.view;    // get gesture mask
-        m.owner->unbind(@"tap"); // remove event.
+        v.unbind(@"tap"); // remove event.
       }, @{@"param1":@"value1"})
       >> self.view;
 }
@@ -272,7 +271,7 @@ In your FooViewController.mm
     [panel->view setBackgroundColor:[UIColor redColor]];//change bg color from FFFF00 to red.
     
     /* Delete */
-    panel.remove(); //remove from parent. and also memory.
+    panel->remove(); //remove from parent. and also memory.
     
 }
 
