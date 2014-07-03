@@ -19,26 +19,30 @@ void boxes_example($& target){
         //transparent color RGBA
         <<box({.x=110,.y=10,.bgcolor="#FFFFFF55"},&s_box)
         //gradient with positions
-        <<box({.x=210,.y=10,.bgcolor="#00FFFF:0 #FF0000:0.7 #FFFF00:1"},&s_box)
+        <<box({.x=210,.y=10,.bgcolor="#00FFFF:0 #FF0000:0.5 #FFFF00:1"},&s_box)
+    
     
         //shadow
         <<box({.x=10,.y=110,.shadow="2 2 3 #000000"},&s_box)
         //inner shadow
         <<box({.x=110,.y=110,.shadow="inset 2 2 3 #000000"},&s_box)
-        //corner radius
-        <<box({.x=210,.y=110,.cornerRadius=10},&s_box)
+        //gradient with positions and degree
+        <<box({.x=210,.y=110,.bgcolor="#00FFFF:0 #FF0000:0.5 #FFFF00:1 90"},&s_box)
+
     
-        //border
-        <<box({.x=10,.y=210,.border="2 #ff3399"},&s_box)
+        //border + shadow
+        <<box({.x=10,.y=210,.border="4 #FF9933",.shadow="0 0 5 #000000"},&s_box)
         //corner radius with border
         <<box({.x=110,.y=210,.border="1 #ff3399 15"},&s_box)
-        //outline
-        <<box({.x=210,.y=210,.outline="1 5 #ff3399"},&s_box)
+        //corner radius
+        <<box({.x=210,.y=210,.cornerRadius=10},&s_box)
     
+        //outline
+        <<box({.x=10,.y=310,.outline="1 5 #ff3399"},&s_box)
         //svg path triangle
-        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=10,.y=310,.bgcolor="#0000FF"},&s_box)
-        //svg path fan
-        <<svgp(@"M40 0 L80 60 Q40 80 0 60 Z", {.x=110,.y=310,.bgcolor="#00FF00"},&s_box)
+        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=110,.y=310,.bgcolor="#0000FF"},&s_box)
+        //svg path fan & shadow
+        <<svgp(@"M40 0 L80 60 Q40 80 0 60 Z", {.x=210,.y=310,.bgcolor="#00FF00",.shadow="0 0 2 #333333"},&s_box)
     
         >>target;
 }
@@ -48,30 +52,30 @@ void images_example($& target){
     NSLog(@"images");
     box(&s_panel)
         //aspect ratio fit
-        <<img(@"people.jpg", {.x=10,.y=10,.contentMode=m_FIT},&s_box)
+        <<img(@"kodaru.jpg", {.x=10,.y=10,.contentMode=m_FIT},&s_box)
         //crop and fit the rect size
-        <<img(@"people.jpg", {.x=110,.y=10,.contentMode=m_CROP_FIT},&s_box)
+        <<img(@"kodaru.jpg", {.x=110,.y=10,.contentMode=m_CROP_FIT},&s_box)
         //aspect ratio fill
-        <<img(@"people.jpg", {.x=210,.y=10,.contentMode=m_FILL},&s_box)
+        <<img(@"kodaru.jpg", {.x=210,.y=10,.contentMode=m_FILL},&s_box)
     
         //show center with original size
-        <<img(@"people.jpg", {.x=10,.y=110,.contentMode=m_ORG},&s_box)
+        <<img(@"kodaru.jpg", {.x=10,.y=110,.contentMode=m_ORG},&s_box)
         //img with round corner
-        <<img(@"people.jpg", {.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40},&s_box)
+        <<img(@"kodaru.jpg", {.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40},&s_box)
         //svg path fan with image background
-        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110},&s_box).setImage(@"people.jpg")
+        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110},&s_box).setImage(@"kodaru.jpg")
     
         //rotate 3d
-        <<img(@"people.jpg", {.x=10,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,1,0,0,200,0.5,1"},&s_box)
+        <<img(@"kodaru.jpg", {.x=10,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,1,0,0,200,0.5,1"},&s_box)
         //rotate 2d
-        <<img(@"people.jpg", {.x=110,.y=210,.contentMode=m_CROP_FIT,.rotate=45},&s_box)
+        <<img(@"kodaru.jpg", {.x=110,.y=210,.contentMode=m_CROP_FIT,.rotate=45},&s_box)
         //rotate 3d
-        <<img(@"people.jpg", {.x=210,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,0,1,0,200,0.5,1"},&s_box)
+        <<img(@"kodaru.jpg", {.x=210,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,0,1,0,200,0.5,1"},&s_box)
     
         //flipH
-        <<img(@"people.jpg", {.x=10,.y=310,.contentMode=m_CROP_FIT,.flip="H"},&s_box)
+        <<img(@"kodaru.jpg", {.x=10,.y=310,.contentMode=m_CROP_FIT,.flip="H"},&s_box)
         //flipV
-        <<img(@"people.jpg", {.x=110,.y=310,.contentMode=m_CROP_FIT,.flip="V"},&s_box)
+        <<img(@"kodaru.jpg", {.x=110,.y=310,.contentMode=m_CROP_FIT,.flip="V"},&s_box)
     
         >>target;
 }
@@ -139,6 +143,9 @@ void actions_example($& target){
         }, ^(GR *g, $& v, Dic *p) {
             $::getView(@"DRG", @"ViewController")->setText(@"Drag me");
         })>>panel;
+    
+    //label(@"Drop here",{}) >> panel;
+    
 }
 
 //Manipulate
@@ -205,9 +212,73 @@ void layers_example($& target){
 }
 
 //Animations(Motions)
-void motion_example($& target){
+void image_editor_example($& target){
     NSLog(@"motion");
+    UIImage * org = [UIImage imageNamed:@"kodaru.jpg"];
+    UIImage * display = [org imageByScalingProportionallyToMinimumSize:{600,400}];
+    static UIImage * ef = display;
     
+    $& im = img(org, {.ID=@"img",.x=10,.y=20,.w=300,.h=200})>>target;
+    NSValue *imp = [NSValue valueWithPointer:&im];
+    
+    UIImage * thumb = [org imageByScalingProportionallyToMinimumSize:{120,120}];
+    
+    struct Effects {
+        float matrix[3][3];
+        float contrast;
+        char* blendColor;
+        NSString* blendImage;
+        float imageAlpha;
+    };
+    
+    static Effects efs[11]={
+        {{{1,0,0},{0,1,0.2},{.1,.1,1}},1.4},
+        {{{1,0.1,0.1},{0.1,1,0.1},{.1,.1,.8}},1.4},
+        {{{0.8,.3,0.1},{0,.8,0.2},{0.1,.2,1}},1.2},
+        {{{0.7,0,0},{0.1,0.6,0},{0.2,0.2,0.5}},1.1,"#CCCC66"},
+        {{{0.9,.3,0.2},{0.2,.7,0.3},{0.2,.3,.5}},1.1},
+        {{{0.7,0,0},{0.2,0.6,0.2},{0.2,0.2,0.6}},1.1,"#CC6666"},
+        {{{1.1,0,0},{0,1.1,0},{0,0,0.6}},1.0,"#6666CC"},
+        {{{0.6,0.2,0.2},{0.2,0.6,0.2},{0.2,0.2,0.6}},1.1,NULL,@"radial.png",1},
+        {{{0.8,0.1,0.1},{0.1,0.8,0.1},{0.1,0.1,0.8}},0.9,"#CC9999"},
+        //{{{.393,.769,.189},{.349,.686,.168},{.272,.534,.131}},1.1,"#666600FF"}, //sepia
+        {{{0.3,0.6,0.3},{0.3,0.6,0.3},{0.3,0.6,0.3}},1.1,"#996633"}, //sepia
+        {{{0.3,0.6,0.2},{0.3,0.6,0.2},{0.3,0.6,0.2}},1.3} //monochrome
+    };
+    
+    UIImage* (^EffectFunc)(Effects,UIImage*) = ^UIImage*(Effects e,UIImage *img){
+        @autoreleasepool {
+            ef = [img colorMix:e.matrix contrast:e.contrast];
+            if(e.blendColor)ef = [ef imageWithBlendColor:str2color(e.blendColor)];
+            if(e.blendImage)ef = [ef imageWithBlendImage:e.blendImage alpha:e.imageAlpha?MIN(e.imageAlpha,1):1];
+            return ef;
+        }
+    };
+    
+    GestureHandler gh = ^(GR *g, $&v, Dic*p){
+        int i = [p[@"i"] intValue];
+        $* im = ($*)[p[@"im"] pointerValue];
+        if(i<0){
+            im->setImage(display);
+        }else{
+            Effects e = efs[i];
+            UIImage * ef = EffectFunc(e,display);
+            im->setImage(ef);
+        }
+    };
+    
+    //bar bg
+    box({0,400,320,64,0,"#000000"})>>target;
+    $& bar = sbox({0,400,320,64,1}) >> target;
+    img(thumb,{.x=2,.y=2,.h=60,.w=60,.contentMode=m_FIT}).bind(@"tap", gh, @{@"i":@(-1),@"im":imp}) >> bar;
+    for (int i=0;i<11;i++) {
+        Effects e = efs[i];
+        UIImage *ef = EffectFunc(e,thumb);
+        img(ef,{.x=(i+1)*64+2.0f,.y=2,.h=60,.w=60,.contentMode=m_FIT}).bind(@"tap", gh, @{@"i":@(i),@"im":imp}) >> bar;
+        ef = nil;
+    }
+
+    bar.setContentSize(12*64, 64);
 }
 
 //Animations(Transform)

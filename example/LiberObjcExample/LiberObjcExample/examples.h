@@ -35,7 +35,7 @@ void manipulate_example($& target);
 void layers_example($& target);
 
 //Animations(Motions)
-void motion_example($& target);
+void image_editor_example($& target);
 
 //Animations(Transform)
 void animation_example($& target);

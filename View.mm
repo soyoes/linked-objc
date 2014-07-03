@@ -958,18 +958,20 @@ void $::drawGradient(NSString *value){
     int degree = 0;
     for (int i=0;i<size; i++) {
         NSString *v = parts[i];
-        if(i<size-1){
-            if([v contains:@":"]){
-                NSArray *vps = [v componentsSeparatedByString:@":"];
-                [colors addObject:(id)[vps[0] colorValue].CGColor];
-                [locations addObject:[NSNumber numberWithFloat:[vps[1] floatValue]]];
+        
+        if([v contains:@":"]){
+            NSArray *vps = [v componentsSeparatedByString:@":"];
+            [colors addObject:(id)[vps[0] colorValue].CGColor];
+            [locations addObject:[NSNumber numberWithFloat:[vps[1] floatValue]]];
+        }else{
+            if(i==size-1 && ![v contains:@"#"]){
+                degree = [v intValue];
             }else{
                 [colors addObject:(id)[v colorValue].CGColor];
                 [locations addObject:[NSNumber numberWithFloat:((float)i/(float)(size-1))]];
             }
-        }else{
-            degree = [v intValue];
         }
+        
     }
     gradient.colors = colors;
     gradient.locations = locations;

@@ -65,7 +65,12 @@
 - (UIImage *)imageRotatedByRadians:(CGFloat)radians;
 - (UIImage *)imageRotatedByDegrees:(CGFloat)degrees;
 - (UIImage *)imageWithCorner:(CGFloat)radius toBounds:(CGRect)bounds borderWidth:(float)borderWidth borderColor:(CGColorRef)borderColor;
-- (UIImage*) merge:(UIImage*)thumb;
+- (UIImage *)imageWithBlendColor:(UIColor*)color;
+- (UIImage *)imageWithBlendImage:(NSString*)imgname alpha:(float)alpha;
+- (UIImage *)merge:(UIImage*)thumb;
+
+- (UIImage*) colorMix:(float[3][3])matrix contrast:(float)contrast;
+
 - (UIImage*) mirror:(int)height;
 - (UIImage*) filters:(NSString*)CIFilterName opts:(NSDictionary*)opts;
 + (void) loadImageFromAssetURL:(NSURL*)url handler:(void(^)(UIImage*,NSDictionary*))handler params:(NSDictionary*)params;

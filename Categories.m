@@ -533,6 +533,35 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     return img;
 }
 
+- (UIImage *)imageWithBlendColor:(UIColor*)color{
+    @autoreleasepool {
+        UIGraphicsBeginImageContextWithOptions (self.size, NO, [[UIScreen mainScreen] scale]);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        CGRect rect = CGRectMake(0, 0, self.size.width, self.size.height);
+        [self drawInRect:rect blendMode:kCGBlendModeNormal alpha:1.0f];
+        CGContextSetBlendMode(context, kCGBlendModeOverlay);
+        [color setFill];
+        CGContextFillRect(context, rect);
+        [self drawInRect:rect blendMode:kCGBlendModeDestinationIn alpha:1.0f];
+        UIImage *tintedImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        return tintedImage;
+    }
+}
+
+- (UIImage*) imageWithBlendImage:(NSString*)imgname alpha:(float)alpha{
+    @autoreleasepool {
+        CGSize size = self.size;
+        UIImage* mask = [[UIImage imageNamed:imgname] imageByScalingProportionallyToMinimumSize:size];
+        UIGraphicsBeginImageContext(size);
+        [self drawAtPoint:CGPointZero blendMode:kCGBlendModeOverlay alpha:1.0];
+        [mask drawAtPoint:CGPointZero blendMode:kCGBlendModeOverlay alpha:alpha];
+        UIImage* res = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        return res;
+    }
+}
+
 - (UIImage*) merge:(UIImage*)thumb{
     UIGraphicsBeginImageContext(self.size);
     
@@ -543,6 +572,35 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     UIGraphicsEndImageContext();
     
     return result;
+}
+
+
+
+- (UIImage*) colorMix:(float[3][3])matrix contrast:(float)contrast{
+    @autoreleasepool {
+        CGSize size = self.size;
+        UIGraphicsBeginImageContext(size);
+        [self drawInRect:CGRectMake(0,0,size.width,size.height) blendMode:kCGBlendModeSourceOut alpha:1.0f];
+        CGContextRef ctx = UIGraphicsGetCurrentContext();
+
+        UInt8* data = (UInt8*)CGBitmapContextGetData(ctx);
+        int r, g, b;
+        int numComponents = 4;
+        int bytesInContext = CGBitmapContextGetHeight(ctx) * CGBitmapContextGetBytesPerRow(ctx);
+        for (int i = 0; i < bytesInContext; i += numComponents) {
+            r = MIN(255,MAX(0,(((float)data[i]/255.0f-0.5)*contrast+0.5)*255));
+            g = MIN(255,MAX(0,(((float)data[i+1]/255.0f-0.5)*contrast+0.5)*255));
+            b = MIN(255,MAX(0,(((float)data[i+2]/255.0f-0.5)*contrast+0.5)*255));
+            //mix
+            data[i]   = MIN(255,(int)(r * matrix[0][0]) + (g *matrix[0][1]) + (b *matrix[0][2]));
+            data[i+1] = MIN(255,(int)(r * matrix[1][0]) + (g *matrix[1][1]) + (b *matrix[1][2]));
+            data[i+2] = MIN(255,(int)(r * matrix[2][0]) + (g *matrix[2][1]) + (b *matrix[2][2]));
+        }
+        UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        //free(data);
+        return img;
+    }
 }
 
 - (UIImage*) mirror:(int)height{

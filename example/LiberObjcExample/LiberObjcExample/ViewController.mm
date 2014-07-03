@@ -22,7 +22,7 @@
     @"Actions",                 \
     @"Manipulate",              \
     @"Layers",                  \
-    @"Animations(Motions)",     \
+    @"Image Editor",     \
     @"Animations(Transform)",    \
     @"Animations(delay, rotation)"]
 
@@ -56,7 +56,7 @@ void list_item_tapped(UIView * target, int i){
     //add contents here
     static example_func* drawing_funcs[10] = {
         boxes_example,images_example,labels_example,lazy_loading_example,
-        actions_example,manipulate_example,layers_example,motion_example,animation_example,
+        actions_example,manipulate_example,layers_example,image_editor_example,animation_example,
         animation_example2
     };
     if(i<10)
