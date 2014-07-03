@@ -94,6 +94,13 @@ NSMutableDictionary * __datas=nil;
     }
 }
 
+/*
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
+    [super touchesMoved:touches withEvent:event];
+    
+    [self.nextResponder touchesMoved:touches withEvent:event];
+}*/
+
 + (Class) layerClass{
     return [Layer class];
 }
@@ -1261,7 +1268,7 @@ void $::setFontSize(float s){
     }
 }
 
-$& $::setEditable(BOOL editable){
+$& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
     styles.editable = editable;
     if(view.textField==nil){
         CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
@@ -1297,10 +1304,13 @@ $& $::setEditable(BOOL editable){
             view.textField = t;
         }
         view.textField.hidden = YES;
+        set(@"initHandler", (id)startHandler);
     }
     this->bind(@"tap", ^void (UIGestureRecognizer*ges, $& o, NSDictionary*params){
         View *v = (View *)ges.view;
         [v switchEditingMode];
+        TextEditOnInitHandler sh = o.get(@"initHandler");
+        if(sh){sh(o);}
     },nil);
     return *this;
 }

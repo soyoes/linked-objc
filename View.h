@@ -30,6 +30,7 @@ extern NSMutableDictionary * __counters;
 typedef void(^GestureHandler)(GR*, $&, Dic*);
 typedef void(^AnimateStepHandler)($&, float);
 typedef void(^AnimateFinishedHandler)($&);
+typedef void(^TextEditOnInitHandler)($&);
 
 
 typedef struct{
@@ -151,9 +152,9 @@ public:
     __attribute__((overloadable)) void setColor(char* color);
     void setFontSize(float s);
     void switchEditingMode();
-    $& setEditable(BOOL editable);
+    $& setEditable(BOOL editable, TextEditOnInitHandler startEdit);
     $& setContentSize(float x, float y);
-    void setBgcolor(id color);
+    //void setBgcolor(id color);
     
     static NSMutableDictionary * s_views;
     static NSString * s_controllerName;

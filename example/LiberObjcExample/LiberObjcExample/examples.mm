@@ -84,16 +84,32 @@ void images_example($& target){
 void labels_example($& target){
     NSLog(@"labels");
     float i=0;
+    
     box(&s_panel)
         //normal label
         <<label(@"Label normal", {.y=10+35*(i++)}, &s_label)
         //truncate
         <<label(@"Label truncate, Lorem ipsum dolor sit amet, consectetur adipisicing elit",
                 {.y=10+35*(i++),.nowrap=true,.truncate=true}, &s_label)
-        <<label(@"Label editable (single line)", {.y=10+35*(i++),.nowrap=true}, &s_label).setEditable(true)
+        <<label(@"Label editable (single line)", {.y=10+35*(i++),.nowrap=true}, &s_label).setEditable(true,nil)
         <<label(@"Label with other font", {.y=10+35*(i++),.font="MarkerFelt-Thin,14",.color="#ff0000"}, &s_label)
         <<label(@"Label multiline\nThe 2nd row", {.y=10+35*(i++), .h=60}, &s_label)
+        <<(label(@"Label multiline\neditable", {.ID=@"textEdit",.y=10+35*(i++)+30, .h=120}, &s_label)
+           .setEditable(true,^($&v) {
+            $* dbtn = $::getView(@"EDIT_DONE_BTN", @"ViewController");
+            if(!dbtn){
+                $* title_row = $::getView(@"LI_0", @"ViewController");
+                //add back btn to title row
+                *title_row << label(@"Done",{.ID=@"back_btn",.x=275,.color="#3366CC"},&s_list_title_btn)
+                .bind(@"tap", ^(GR *gg, $& btn, Dic *pp) {
+                    btn.remove();
+                    $* te = $::getView(@"textEdit", @"ViewController");
+                    if(te) [te->view switchEditingMode];
+                }, @{});
+            }
+            }))
         >>target;
+
 }
 
 //Lazy loading
@@ -137,14 +153,39 @@ void actions_example($& target){
     label(@"",{.ID=@"RES",.y=100,.textAlign="center",.bgcolor="#00000000",.color="#ffffff"},&s_label)
         >>panel;
     
-    label(@"Drag me",{.ID=@"DRG",.x=120,.y=200,.bgcolor="#ffffff",.paddingTop=30,.textAlign="center"},&s_box)
-        .dragable(^(GR *g, $& v, Dic *p) {
-            $::getView(@"DRG", @"ViewController")->setText(@"Dragging");
-        }, ^(GR *g, $& v, Dic *p) {
-            $::getView(@"DRG", @"ViewController")->setText(@"Drag me");
-        })>>panel;
     
-    //label(@"Drop here",{}) >> panel;
+    label(@"Drop here",{.ID=@"DRP",.x=40,.y=300,.w=240,.h=120,.bgcolor="#ffffff00",.paddingTop=30,.color="#ffffff",.textAlign="center",.border="1 #ffffff"},&s_box)
+        >> panel;
+    
+    label(@"Drag me",{.ID=@"DRG",.x=120,.y=120,.bgcolor="#ffffff",.paddingTop=30,.z=1,.textAlign="center"},&s_box)
+        .dragable(^(GR *g, $& v, Dic *p) {
+            v.setText(@"Dragging");
+            View * sv = g.view.superview;
+            CGPoint lo = [g locationInView:sv];
+            for (UIView * v in sv.subviews) {
+                if([v isKindOfClass:[View class]] && ![@"DRG" isEqualToString:((View*)v).owner->ID]){
+                    if(CGRectContainsPoint(v.frame,lo)){
+                        ((View*)v).owner->setStyle({.bgcolor="#FFcccc88"});
+                    }else{
+                        ((View*)v).owner->setStyle({.bgcolor="#ffffff00"});
+                    }
+                }
+            }
+        }, ^(GR *g, $& v, Dic *p) {
+            v.setText(@"Drag me");
+            $* drop =$::getView(@"DRP", @"ViewController");
+            if(CGRectContainsPoint(drop->rect(), v.view.center)){
+                v.set(@"x",@(v.view.center.x));
+                v.set(@"y",@(v.view.center.y));
+                v.animate(300, ^($ &v, float delta) {
+                    float x = [v.get(@"x") floatValue];
+                    float y = [v.get(@"y") floatValue];
+                    v.view.center = {x+(drop->view.center.x-x)*delta, y+(drop->view.center.y-y)*delta};
+                }, ^($&v){
+                    drop->setStyle({.bgcolor="#ffffff00"});
+                }, @{@"style":@"easeOut"});
+            }
+        })>>panel;
     
 }
 
