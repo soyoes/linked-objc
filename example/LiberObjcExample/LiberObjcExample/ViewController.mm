@@ -24,7 +24,9 @@
     @"Layers",                  \
     @"Image Editor",     \
     @"Animations(Transform)",    \
-    @"Animations(delay, rotation)"]
+    @"Animations(delay, rotation)",\
+    @"Animations(styles animation)",\
+    @"SVG Animation"]
 
 $* _panel;
 bool panel_presented;
@@ -54,12 +56,12 @@ void list_item_tapped(UIView * target, int i){
          .startMove();                                  //start the animation
     
     //add contents here
-    static example_func* drawing_funcs[10] = {
+    static example_func* drawing_funcs[12] = {
         boxes_example,images_example,labels_example,lazy_loading_example,
         actions_example,manipulate_example,layers_example,image_editor_example,animation_example,
-        animation_example2
+        animation_example2,animation_example3,svg_example
     };
-    if(i<10)
+    if(i<12)
         drawing_funcs[i](panel);
     
     _panel = &panel;
@@ -77,7 +79,7 @@ void list_item_tapped(UIView * target, int i){
     list(EXAMPLES,^$& (id item, int i) {
         //Set unique ID for each row.
         Str * ID = [NSString stringWithFormat:@"LI_%d",i];
-        return label((Str*)item, {.y=i*45.0f+1, .ID=ID}, i==0?&s_list_title:&s_list_row)
+        return label((Str*)item, {.y=i==0?1:i*41.0f+5, .ID=ID}, i==0?&s_list_title:&s_list_row)
                 .bind(@"tap", ^(GR *gesture, $& v, Dic *params) {
                     Str * item = params[@"item"];
                     int i = [params[@"i"] intValue];

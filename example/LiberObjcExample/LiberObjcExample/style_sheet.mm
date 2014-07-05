@@ -11,7 +11,7 @@
 #define FONT_DEFAULT "Futura-CondensedMedium,14"
 
 Styles s_list={0,20,320,548,0,"#ECF0F1"};
-Styles s_list_row={.w=320,.h=44,.bgcolor="#FFFFFF",.color="#333333",.font=FONT_DEFAULT,.paddingTop=10,.paddingLeft=10,};
+Styles s_list_row={.w=320,.h=40,.bgcolor="#FFFFFF",.color="#333333",.font=FONT_DEFAULT,.paddingTop=8,.paddingLeft=10,};
 Styles s_list_title={.w=320,.h=44,
     .textAlign="center",.bgcolor="#FFFFFF",
     .color="#FF0000",.font=FONT_DEFAULT,.paddingTop=10};

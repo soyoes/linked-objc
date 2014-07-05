@@ -33,6 +33,83 @@
 #define m_CROP_FIT 2
 #define m_ORG 3
 
+typedef enum {
+    s_easeIn,
+    s_easeOut,
+    s_easeInOut
+} AnimationStyle;
+
+typedef enum {
+    d_linear,
+    d_quad,
+    d_quad5,
+    d_circ,
+    d_bounce,
+    d_arrow,
+    d_back,
+    d_elastic,
+} AnimationDelta;
+
+typedef enum{
+    l_solid,
+    l_dashed,
+    l_dotted
+} LineStyles;
+
+typedef struct{
+    AnimationDelta delta;
+    AnimationStyle style;
+    int delay;
+}Animete_opt;
+
+typedef struct{
+    float r;
+    float g;
+    float b;
+    float a;
+}RGBA;
+
+typedef struct{
+    float degree;
+    float x;
+    float y;
+    float z;
+    float resp;
+    float axisX;
+    float axisY;
+    float transX;
+    float transY;
+    float transZ;
+}Rotate3D_opt;
+
+typedef struct{
+    bool  inset;
+    float x;
+    float y;
+    float radius;
+    char* color;
+}Shadow_opt;
+
+typedef struct{
+    float w;
+    char* color;
+    LineStyles style;
+}Line_opt;
+
+typedef struct{
+    float w;
+    char* color;
+    LineStyles style;
+    float space;
+}Outline_opt;
+
+typedef struct{
+    float w;
+    char* color;
+    LineStyles style;
+    float radius;
+}Borderline_opt;
+
 typedef struct{
     float   x;  //left
     float   y;  //top
@@ -63,12 +140,14 @@ typedef struct{
     
     float   borderWidth;
     char *  borderColor;
+    LineStyles borderStyle;
     float   cornerRadius;
             //@see border
     
     char *  outlineColor;
     float   outlineSpace,
             outlineWidth;
+    LineStyles outlineStyle;
             //@see outline
     
     int     contentMode;//m_FIT/m_FILL/m_CROP
@@ -109,5 +188,8 @@ typedef struct{
     NSString * ID;
 
 }Styles;
+
+
+
 
 #endif

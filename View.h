@@ -12,6 +12,8 @@
 #import "Styles.h"
 #import "HTTPRequest.h"
 #include <initializer_list>
+#include <vector>
+#include <regex>
 
 #define radians(degrees) (degrees * M_PI/180)
 #define _events @[@"tap", @"pinch", @"rotation", @"swipe", @"pan", @"longpress"]
@@ -43,7 +45,11 @@ typedef struct{
 
 class SVG{
 public :
-    static CGPathRef path(const char* pathcmd);
+    static std::vector<SVGPathCmd> str2cmds(const char* pathcmd);
+    static std::vector<SVGPathCmd> tween(const char* path1, const char* path2,  float delta);
+    __attribute__((overloadable)) static CGPathRef path(const char* pathcmd);
+    __attribute__((overloadable)) static CGPathRef path(std::vector<SVGPathCmd> cmds);
+    static const char * pathFromStyle(Styles s);
 };
 
 
@@ -113,6 +119,7 @@ public:
     __attribute__((overloadable)) $& animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd);
     __attribute__((overloadable)) $& animate(float ms, Styles s, Dic* opts);
     __attribute__((overloadable)) $& animate(float ms, Styles s, AnimateFinishedHandler onEnd, Dic* opts);
+    __attribute__((overloadable)) $& animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler onEnd, Dic* opts);
     __attribute__((overloadable)) $& animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd, Dic*opts);
     
     __attribute__((overloadable)) $& operator>>($&p);   //insert into super
@@ -130,15 +137,14 @@ public:
     void set(NSString*key, id value);
     void del(NSString*key);
     
-    void drawShadow(NSString*shadow);
-    void drawOutline(NSString*outline);
-    void drawGradient(NSString *value);
+    void setShadow(const char* shadow);
+    void setOutline(const char* outline);
+    void setGradient(const char* value);
+    void setBorder(const char* border);
     
-    void drawBorder(NSString *border);
-    
-
     //H V S T are unsupported
-    void drawSvgPath (const char* svgpathcmd);
+    __attribute__((overloadable)) void setSvgPath (const char* svgpathcmd);
+    __attribute__((overloadable)) void setSvgPath (CGPathRef path);
     
     
     $& setImage(id src);
@@ -165,6 +171,8 @@ public:
     static void setControllerName(NSString *controllerName);
     
     void remove();
+    
+    NSValue* value();
     //TODO remove from super
     
 private:
@@ -251,25 +259,51 @@ __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handl
 #pragma mark - CPP style funcs
 
 //string
-NSString * str(char * cs);
+NSString * str(const char * cs);
+
 char * cstr(NSString * cs);
-UIColor * str2color(char * s);
+bool strstarts(const char* s1, const char* s2);
+bool strends(const char* s1, const char* s2);
+bool strhas(const char* s1, const char* s2);
+char * f2str(float f);
+char * strs(int num, const char* s ,...);
 char * dec2hex(int dec, int bits);
+std::vector<std::string> splitx(const std::string str, const std::regex regex);
+
+
+//colors
+UIColor * str2color(const char * s);
 char * colorstr(int r, int g, int b, int a);
 char * colorfstr(float r, float g, float b, float a);
-bool strstarts(char* s1, const char* s2);
-bool strends(char* s1, const char* s2);
-bool strhas(char* s1, const char* s2);
-char * f2str(float f);
-char * strs(int num, char* s ,...);
-long long milliseconds();
+RGBA rgbaf(const char* colorStr); //return rgba values of 0~1
+RGBA rgba(const char* colorStr); //return rgba values of 0~255
 
 //styles
-Styles str2style(char * s);
+Styles str2style(const char * s);
 __attribute__((overloadable)) Styles style(Styles *custom, Styles *ext);
 __attribute__((overloadable)) Styles style(Styles *custom, std::initializer_list<Styles *>exts);
+NSValue * style2val(Styles s);
+Styles val2style(NSValue *v);
+
+//styles : rotate 3d opts
+char* r3dstr(float degree, float x, float y, int resp, float axisX, float axisY, float transX, float transY);
+Rotate3D_opt r3dopt(const char * rotate3dStr);
+
+//styles : shadow
+char* shadstr(bool inset, float x, float y, float blur, const char*color);
+Shadow_opt shadopt(const char*);
+
+//styles : border
+char* bordstr(float w, LineStyles style, const char*color, float radius);
+Borderline_opt bordopt(const char*s);
+
+//styles : outline
+char* olstr(float w, LineStyles style, const char*color, float space);
+Outline_opt olopt(const char*s);
+
 
 //time
+long long milliseconds();
 typedef void(^TimeoutHandler)(NSDictionary*);
 void $setTimeout(float millisec, TimeoutHandler block, NSDictionary* data);
 typedef BOOL(^TimeIntervalHandler)(NSDictionary*,int); //RETURN false to break

@@ -33,16 +33,16 @@ void boxes_example($& target){
         //border + shadow
         <<box({.x=10,.y=210,.border="4 #FF9933",.shadow="0 0 5 #000000"},&s_box)
         //corner radius with border
-        <<box({.x=110,.y=210,.border="1 #ff3399 15"},&s_box)
+        <<box({.x=110,.y=210,.cornerRadius=10,.border="1 #ff3399 15"},&s_box)
         //corner radius
-        <<box({.x=210,.y=210,.cornerRadius=10},&s_box)
+        <<box({.x=210,.y=210,.cornerRadius=10,.shadow="1 1 3 #333333"},&s_box)
     
         //outline
-        <<box({.x=10,.y=310,.outline="1 5 #ff3399"},&s_box)
+        <<box({.x=10,.y=310,.outline="1 #ff3399 5"},&s_box)
         //svg path triangle
-        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=110,.y=310,.bgcolor="#0000FF"},&s_box)
+        <<svgp(@"M 40 0 L80 80 L0 80 Z", {.x=110,.y=310,.bgcolor="#0000FF"},&s_box)
         //svg path fan & shadow
-        <<svgp(@"M40 0 L80 60 Q40 80 0 60 Z", {.x=210,.y=310,.bgcolor="#00FF00",.shadow="0 0 2 #333333"},&s_box)
+        <<svgp(@"M 40 0 L80 60 Q40 80 0 60 Z", {.x=210,.y=310,.bgcolor="#00FF00",.shadow="0 0 2 #333333"},&s_box)
     
         >>target;
 }
@@ -351,19 +351,75 @@ void animation_example2($& target){
     NSLog(@"example2");
     $& p = box(&s_panel) >> target;
     for (int i=0; i<12; i++) {
-        $& cell = box({.x=10+i%3*100.0f,.y=600,.bgcolor="#FFFFFF"},&s_box) >> p;
-        cell.set(@"y", @(floor(i/3)*100+20));
-        cell.animate(1000, ^($ &o, float delta) {
-            CGRect r = o.rect();
-            float y = r.origin.y;
-            float targetY = [o.get(@"y") floatValue];
-            o.setStyle({.y=y+delta*(targetY-y)});
-        }, ^($& o) {
-            o.animate(1000, ^($& oo, float delta1) {
-                int degree =delta1*360;
-                NSString * rt = [NSString stringWithFormat:@"%d,0,1,0,300,0.5,0.5",degree];
-                oo.setStyle({.rotate3d=cstr(rt)});
-            }, ^($ &) {}, @{@"delta":@"linear"});
-        }, @{@"delta":@"quad",@"style":@"easeOut",@"delay":@(i*64+300)});//
+        box({.x=10+i%3*100.0f,.y=600,.bgcolor="#FFFFFF"},&s_box)
+            .animate(1000, {.y=(float)floor(i/3)*100.0f+20.0f}, ^($&o){
+                o.animate(1000, {.rotate3d="360,0,1,0,300"});
+            }, @{@"delta":@"quad",@"style":@"easeOut",@"delay":@(i*64+300)})
+            >> p;
     }
+    
+    //another way to do this
+    /*
+     for (int i=0; i<12; i++) {
+         $& cell = box({.x=10+i%3*100.0f,.y=600,.bgcolor="#FFFFFF"},&s_box) >> p;
+         cell.set(@"y", @(floor(i/3)*100+20));
+         cell.animate(1000, ^($ &o, float delta) {  //step function
+             CGRect r = o.rect();
+             float y = r.origin.y;
+             float targetY = [o.get(@"y") floatValue];
+             o.setStyle({.y=y+delta*(targetY-y)});
+         }, ^($& o) {   //end function
+             o.animate(1000, ^($& oo, float delta1) {
+             int degree =delta1*360;
+             NSString * rt = [NSString stringWithFormat:@"%d,0,1,0,300,0.5,0.5",degree];
+             oo.setStyle({.rotate3d=cstr(rt)});
+            }, ^($ &) {}, @{@"delta":@"linear"});
+         }, 
+         @{@"delta":@"quad",@"style":@"easeOut",@"delay":@(i*64+300)});
+     }
+     */
+    
+}
+
+//with styles
+void animation_example3($& target){
+    NSLog(@"example3");
+    $& a = box(&s_panel)
+    //bgcolor
+    <<(box({.x=10,.y=10,.bgcolor="#ffff00"},&s_box)
+       .animate(2000,{.x=60,.y=140,.w=200,.h=240,
+            .bgcolor="#00FFFF",.rotate3d="360,1,1,0,300",//.rotate=360,
+            .shadow="10 10 10 #000000ff",
+            .border="5 solid #ffffff",
+            .cornerRadius=100
+            },^($&v){},@{@"delta":@"bounce", @"style":@"easeOut"}))
+    >>target;
+}
+
+
+//svg example
+void svg_example($& target){
+    NSLog(@"svg");
+    static const char* shapes[6] = {
+        "M 0 0 L200 0 L 200 200 L 0 200 Z",
+        "M 35.4666 111.6678 C 6.375 102 17.976 20.613 64.3836 34.5 C 68.6892 7.4298 122.655 11.8236 122.3022 34.5 C 156.1404 5.4966 199.3836 63.3288 170.3784 92.3322 C 205.1832 106.3938 169.9392 182.1558 141.375 169.5 C 139.089 190.5942 88.0248 197.976 83.5428 169.5 C 54.6276 199.911 -5.6652 153.1524 35.4666 111.6678 Z",
+        "M 12 72.012 L 72.012 72.012 L 72.012 12 L 131.988 12 L 131.988 72.012 L 192 72.012 L 192 131.988 L 131.988 131.988 L 131.988 192 L 72.012 192 L 72.012 131.988 L 12 131.988 Z",
+        "M 102 12 L 122.11605 74.18847 L 187.21297 74.18847 L 134.548455 112.62306 L 154.66451 174.81153 L 102 136.37694 L 49.33549 174.81153 L 69.451545 112.62306 L 16.787034 74.18847 L 81.88395 74.18847 Z",
+        "M 102 57 C 78.6216 1.101 12.351 13.9332 12 78.6216 C 11.649 115.0086 43.6404 127.839 64.7346 142.2534 C 85.125 156.1404 99.8904 175.125 102 182.8596 C 104.1096 175.125 120.2808 155.4384 139.2654 141.5514 C 160.0086 126.2586 192.351 113.9538 192 78.6216 C 191.649 13.4058 124.149 3.036 102 57 Z",
+        "M 162.66523 169.65428 C 155.17486 180.6263 147.42614 191.53232 135.19321 191.76032 C 123.15254 191.98832 119.2932 184.6163 105.55419 184.6163 C 91.801154 184.6163 87.4992 191.53232 76.131468 191.98832 C 64.321122 192.43232 55.340694 180.1383 47.788242 169.21428 C 32.358888 146.88024 20.58259 106.064166 36.42051 78.518117 C 44.263363 64.838093 58.316813 56.182078 73.54589 55.954077 C 85.14394 55.740077 96.101105 63.78609 103.18491 63.78609 C 110.28073 63.78609 123.57913 54.126074 137.56048 55.542077 C 143.41258 55.784077 159.83731 57.90408 170.38591 73.36611 C 169.55276 73.91611 150.78078 84.85613 151.009095 107.64817 C 151.23941 134.87422 174.82606 143.92423 175.10044 144.04623 C 174.88614 144.68623 171.32922 156.96626 162.66523 169.65428 M 111.30214 25.634024 C 117.7751 18.034011 128.71624 12.380001 137.74474 12 C 138.898334 22.558019 134.65847 33.130037 128.3958 40.74805 C 122.121115 48.354064 111.8489 54.278074 101.76895 53.486073 C 100.39905 43.156055 105.480085 32.384036 111.30214 25.634024",
+    };
+    int __block i=0;
+    int len = 800;
+    $& a = box(&s_panel)
+    <<(svgp(str(shapes[i++]), {50,50,200,200},&s_box)
+       .animate(len,{.bgcolor="#ff0000"},shapes[i++],^($&v){
+        v.animate(len,{.bgcolor="#ffff00"},shapes[i++],^($&v){
+            v.animate(len,{.bgcolor="#00ff00"},shapes[i++],^($&v){
+                v.animate(len,{.bgcolor="#00ffff"},shapes[i++],^($&v){
+                    v.animate(len,{.bgcolor="#cccccc",.shadow="3 3 5 #000000"},shapes[i++],^($&v){},@{@"delay":@(len+1)});
+                },@{@"delay":@(len+1)});
+            },@{@"delay":@(len+1)});
+        },@{@"delay":@(len+1)});
+    },@{@"delay":@(len+1)}))
+    >>target;
 }

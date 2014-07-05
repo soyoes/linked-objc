@@ -43,5 +43,13 @@ void animation_example($& target);
 //Animations(rotation delay)
 void animation_example2($& target);
 
+//Animations(styles animation)
+void animation_example3($& target);
+
+//SVG Animation
+void svg_example($& target);
+
+
+
 
 #endif /* defined(__LiberObjcExample__examples__) */

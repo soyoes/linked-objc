@@ -5,6 +5,15 @@
 //  Created by soyoes on 6/14/14.
 //  Copyright (c) 2014 Liberhood ltd. All rights reserved.
 //
+//
+
+/*
+TODO
+ dashed
+ rotate2d
+ 
+ 
+ */
 
 #import "Styles.h"
 #include <math.h>
@@ -160,16 +169,11 @@ NSMutableDictionary * __datas=nil;
 
 #pragma mark - SVG
 
-/**
- get svg path from svg path string.
- don't forget to release : CGPathRelease(path), after using.
- */
-CGPathRef SVG::path(const char* svgpathcmd){
-    string svgpath(svgpathcmd);
-    
-    //svgpath = regex_replace(svgpath, regex("\\s*,\\s*"), ",");
-    //svgpath = regex_replace(svgpath, regex("\\s+"), " ");
+vector<SVGPathCmd> SVG::str2cmds(const char* pathcmd){
+    string svgpath(pathcmd);
+
     svgpath = regex_replace(svgpath, regex("[\\s+,]"), " ");
+    svgpath = regex_replace(svgpath, regex("([A-Z])\\s+"), "$1");
     smatch m;
     regex e("\\b[MLCSQTAZ]*[\\d\\.]*\\b");
     vector<SVGPathCmd> cmds;
@@ -195,7 +199,18 @@ CGPathRef SVG::path(const char* svgpathcmd){
         }
         svgpath = m.suffix().str();
     }
-    
+    return cmds;
+}
+
+/**
+ get svg path from svg path string.
+ don't forget to release : CGPathRelease(path), after using.
+ */
+__attribute__((overloadable)) CGPathRef SVG::path(const char* svgpathcmd){
+    vector<SVGPathCmd> cmds = SVG::str2cmds(svgpathcmd);
+    return SVG::path(cmds);
+}
+__attribute__((overloadable)) CGPathRef SVG::path(std::vector<SVGPathCmd> cmds){
     CGMutablePathRef path = CGPathCreateMutable();
     for (auto c : cmds) {
         switch (c.cmd) {
@@ -223,6 +238,55 @@ CGPathRef SVG::path(const char* svgpathcmd){
     }
     return path;
 }
+
+vector<SVGPathCmd> SVG::tween(const char* path1, const char* path2,  float delta){
+    vector<SVGPathCmd> cs1 = SVG::str2cmds(path1);
+    vector<SVGPathCmd> cs2 = SVG::str2cmds(path2);
+    vector<SVGPathCmd> cs;
+    int size_min = MIN(cs1.size(),cs2.size());
+    int size_max = MAX(cs1.size(),cs2.size());
+    for (int i=0; i<size_min; i++) {
+        SVGPathCmd  c1=cs1.at(i),c2=cs2.at(i),c=c1;
+        for (int j=0; j<6; j++) {
+            float cf1 = c1.coords[j]?c1.coords[j]:0,
+                cf2 = c2.coords[j]?c2.coords[j]:0;
+            if(cf1!=cf2) c.coords[j] = cf1 + (cf2-cf1)*delta;
+        }
+        c.cmd = c2.cmd;
+        cs.push_back(c);
+    }
+    if(size_max!=size_min){
+        vector<SVGPathCmd> cx = cs1.size()>cs2.size()? cs1:cs2;
+        for (int i=size_min; i<size_max; i++) {
+            cs.push_back(cx[i]);
+        }
+    }
+    return cs;
+}
+
+
+const char * SVG::pathFromStyle(Styles s){
+    float x1=s.x, y1=s.y, x2=s.x+s.w, y2=s.y+s.h, r=s.cornerRadius;
+    NSString * ss = r>0?
+    [NSString stringWithFormat:@"M%f %f L%f %f Q%f,%f %f,%f L%f %f Q%f,%f %f,%f L%f %f Q%f,%f %f,%f L%f,%f Q%f,%f %f,%f Z",
+         x1+r,  y1,     //left-up corner p2
+         x2-r,  y1,     //right-up corner p1
+         x2,    y1,     //right-up corner cp
+         x2,    y1+r,   //right-up corner p2
+         x2,    y2-r,   //right-down corner p1
+         x2,    y2,     //right-down corner cp
+         x2-r,  y2,     //right-down corner p2
+         x1+r,  y2,     //left-down corner p1
+         x1,    y2,     //left-down corner cp
+         x1,    y2-r,   //left-down corner p2
+         x1,    y1+r,   //left-up corner p1
+         x1,    y1,     //left-up corner cp
+         x1+r,  y1      //left-up corner p2 close
+     ]:[NSString stringWithFormat:@"M%f %f L%f %f L%f %f L%f %f Z", x1,y1, x2,y1, x2,y2, x1,y2];
+    return cstr(ss);
+}
+
+
 
 #pragma mark - $deltas
 typedef float delta_f(float);
@@ -272,9 +336,9 @@ map<NSString*, style_f*> style_funcs = {
 #pragma mark - $
 
 
-__attribute__((overloadable)) $::$(){}
-__attribute__((overloadable)) $::$(id _src):src(_src){}
-__attribute__((overloadable)) $::$(bool scroll):scrollable(scroll){}
+__attribute__((overloadable)) $::$():svgPath(nullptr){}
+__attribute__((overloadable)) $::$(id _src):src(_src),svgPath(nullptr){}
+__attribute__((overloadable)) $::$(bool scroll):scrollable(scroll),svgPath(nullptr){}
 __attribute__((overloadable)) $::$(const char* path):svgPath(path){}
 // Constructor
 $::~$(){
@@ -356,34 +420,11 @@ $& $::setStyle(Styles s){
         view.frame = {{xx,yy},{ww,hh}};
         layer.frame = {{xx,yy},{ww,hh}};
         contentLayer.frame = layer.bounds;
-        
-        /*
-        if((s.x&&s.x!=styles.x) || (s.y&&s.y!=styles.y) ){
-            view.center=CGPointMake(xx+ww/2, yy+hh/2);
-        }
-        
-        if(s.w||s.h){
-            cout << "RESIZING:" << ww<<","<<hh << endl;
-            view.bounds = CGRectMake(0, 0, ww, hh);
-            view.backgroundColor = [UIColor blackColor];
-            layer.bounds = view.bounds;
-            layer.backgroundColor = [UIColor redColor].CGColor;
-            //transLayer.bounds = view.bounds;
-            contentLayer.bounds = view.bounds;
-            contentLayer.backgroundColor = [UIColor purpleColor].CGColor;
-            
-            /*
-            transLayer.bounds = view.bounds;
-            contentLayer.bounds = view.bounds;
-            if(shapeLayer)shapeLayer.bounds = view.bounds;
-            if(textLayer)textLayer.bounds = {{ss.paddingLeft,ss.paddingTop},{ww-ss.paddingLeft-ss.paddingRight, hh-ss.paddingTop-ss.paddingBottom}};
-         
-        }*/
     }
     
     if(ss.bgcolor){
         if(strhas(ss.bgcolor, ":")){//gradient
-            this->drawGradient(str(ss.bgcolor));
+            this->setGradient(ss.bgcolor);
         }else{
             if(shapeLayer){
                 shapeLayer.fillColor =str2color(ss.bgcolor).CGColor;
@@ -395,24 +436,26 @@ $& $::setStyle(Styles s){
     }
     
     if(ss.shadow){
-        NSString *shadow = [str(ss.shadow) regexpReplace:@"  +" replace:@" "];
-        if([shadow contains:@","]){
-            NSArray *shadows = [shadow componentsSeparatedByString:@","];
-            for(NSString *sha in shadows)
-                this->drawShadow(sha);
+        string shadow(ss.shadow);
+        shadow = regex_replace(shadow,regex("\\s+")," ");
+        if(strhas(ss.shadow,",")){
+            vector<string> shadows = splitx(shadow,regex(","));
+            int size = shadows.size();
+            for(int i=0;i<size;i++){
+                setShadow(shadows[i].c_str());
+            }
         }else{
-            this->drawShadow(shadow);
+            setShadow(shadow.c_str());
         }
     }
 
-    if(ss.border) this->drawBorder(str(ss.border));
+    if(ss.border) this->setBorder(ss.border);
     if(styles.cornerRadius>0) { //radius
         contentLayer.cornerRadius = styles.cornerRadius;
-        contentLayer.masksToBounds=YES;
     }
     
     if(ss.outline){
-        this->drawOutline(str(ss.outline));
+        this->setOutline(ss.outline);
     }
     
     CGAffineTransform transf;
@@ -445,25 +488,12 @@ $& $::setStyle(Styles s){
         view.transform = transf;
     
     if(ss.rotate3d){
-        string rotate(ss.rotate3d);
-        //degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
-        float parts[] = {0,0,0,0,500,0.5,0.5,0,0,0};
-        rotate = regex_replace(rotate, regex("\\s*,\\s*"), ",");
-        int start = 0, end = 0, i=0;
-        do {
-            end = (int)rotate.find(',', start);
-            if(end<0)break;
-            string sc =rotate.substr(start, end - start);
-            parts[i] = stof(sc);
-            start = end + 1;
-            i++;
-        }while(end != string::npos);
-        
-        layer.anchorPoint = CGPointMake(parts[5], parts[6]);
+        Rotate3D_opt o3 = r3dopt(ss.rotate3d);
+        layer.anchorPoint = CGPointMake(o3.axisX, o3.axisY);
         CATransform3D rt = CATransform3DIdentity;
-        rt.m34 = 1.0f / (-1*parts[4]);
-        rt = CATransform3DRotate(rt, radians(parts[0]), parts[1], parts[2], parts[3]);
-        rt = CATransform3DTranslate(rt, parts[7], parts[8], parts[9]);
+        rt.m34 = 1.0f / (-1*o3.resp);
+        rt = CATransform3DRotate(rt, radians(o3.degree), o3.x, o3.y, o3.z);
+        rt = CATransform3DTranslate(rt, o3.transX, o3.transY, o3.transZ);
         layer.transform = rt;//CATransform3DConcat
     }
     
@@ -538,6 +568,10 @@ void $::remove(){
     delete this;
 }
 
+NSValue* $::value(){
+    return [NSValue valueWithPointer:this];
+}
+
 #pragma mark $ animator
 
 /**
@@ -550,33 +584,6 @@ $& $::startMove(){
     //you have to init animator out side.
     if(!animator)
         animator = [[UIDynamicAnimator alloc] initWithReferenceView:view.superview];
-    /*
-    for (Str *k in opts) {
-        Str *type = [k stringByReplacingCharactersInRange:NSMakeRange(0,1) withString:[[k substringToIndex:1] uppercaseString]];
-        NSString * className = [NSString stringWithFormat:@"UI%@Behavior",type];
-        UIDynamicBehavior *behavior = [[NSClassFromString(className) alloc] initWithItems:@[view]];
-        [animator addBehavior:behavior];
-    }*/
-    /*
-    if(bounds){
-        if(!dummys) dummys=[[MArr alloc] init];
-        float hh = view.superview.bounds.size.height;
-        float ww = view.superview.bounds.size.width;
-        for (int i=0; i<4; i++) {
-            CGRect wall;
-            float v = [bounds[i] floatValue];
-            switch (i) {
-                case 0:wall = CGRectMake(v, 0, 1, hh);break;
-                case 1:wall = CGRectMake(0, v, ww, 1);break;
-                case 2:wall = CGRectMake(ww-v, 0, 1, hh);break;
-                case 3:wall = CGRectMake(0, hh-v, ww, 1);break;
-            }
-            UIView *dummy = [[UIView alloc] initWithFrame:wall];
-            [dummys addObject:dummy];
-            dummy.backgroundColor = [UIColor redColor];
-            [view.superview addSubview:dummy];
-        }
-    }*/
     for (id b in behaviors) {
         [animator addBehavior:b];
     }
@@ -675,7 +682,7 @@ $& $::addCollision(Dic *opt){
             else b.translatesReferenceBoundsIntoBoundary = YES;
             b.collisionMode = UICollisionBehaviorModeEverything;
         }else if(opt[@"svg"]){
-            CGPathRef path = SVG::path([opt[@"svg"] UTF8String]);
+            CGPathRef path = SVG::path(cstr(opt[@"svg"]));
             [b addBoundaryWithIdentifier:@"svg" forPath:[UIBezierPath bezierPathWithCGPath:path]];
             CGPathRelease(path);
         }
@@ -688,11 +695,101 @@ $& $::addCollision(Dic *opt){
 }
 
 
-$& $::animate(float ms, Styles s){return *this;}
-$& $::animate(float ms, Styles s, AnimateFinishedHandler onEnd){return *this;}
-$& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd){return *this;}
-$& $::animate(float ms, Styles s, Dic* opts){return *this;}
-$& $::animate(float ms, Styles s, AnimateFinishedHandler onEnd, Dic* opts){return *this;}
+char* deltacolor(char* from, char* to, float delta){
+    RGBA o = rgba(from);
+    RGBA t = rgba(to);
+    return colorfstr((o.r+(t.r-o.r)*delta)/255.0f, (o.g+(t.g-o.g)*delta)/255.0f, (o.b+(t.b-o.b)*delta)/255.0f, (o.a+(t.a-o.a)*delta)/255.0f);
+}
+
+/**
+ 
+ supported style animation
+ .x, .y, .w, .h 
+ .alpha
+ .cornerRadius
+ .rotate
+ .rotate3d
+ .bgcolor;
+ .color;
+ .shadow;
+ .border;
+ 
+ */
+$& $::animate(float ms, Styles s){return animate(ms, s, ^($&v){}, @{});}
+$& $::animate(float ms, Styles s, AnimateFinishedHandler onEnd){return animate(ms, s, ^($&v){}, @{});}
+$& $::animate(float ms, Styles s, Dic* opts){return animate(ms, s, ^($&v){}, opts);}
+$& $::animate(float ms, Styles s, AnimateFinishedHandler onEnd, Dic* opts){
+    return animate(ms, s, nullptr, onEnd, opts);
+}
+
+$& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler onEnd, Dic* opts){
+    set(@"orgStyle", style2val(styles));
+    set(@"targetStyle", style2val(s));
+    if(svgpath){
+        set(@"orgSvgPath", str(this->svgPath?this->svgPath:SVG::pathFromStyle(styles)));
+        set(@"targetSvgPath", str(svgpath));
+    }
+    animate(ms, ^($& v, float delta) {
+        Styles org = val2style(v.get(@"orgStyle"));
+        Styles tar = val2style(v.get(@"targetStyle"));
+        Styles s = {};
+        //x, y, w, h
+        if(tar.x || tar.y || tar.w || tar.h){
+            s.x = tar.x?org.x+(tar.x-org.x)*delta:org.x,
+            s.y = tar.y?org.y+(tar.y-org.y)*delta:org.y,
+            s.w = tar.w?org.w+(tar.w-org.w)*delta:org.w,
+            s.h = tar.h?org.h+(tar.h-org.h)*delta:org.h;
+        }
+        if(tar.alpha) s.alpha = org.alpha+(tar.alpha-org.alpha)*delta;
+        if(tar.cornerRadius) s.cornerRadius = org.cornerRadius+(tar.cornerRadius-org.cornerRadius)*delta;
+        if(tar.rotate)s.rotate = org.rotate+(tar.rotate-org.rotate)*delta;
+        if(tar.rotate3d){
+            Rotate3D_opt o3d = r3dopt(org.rotate3d?org.rotate3d:"0,0,0,0,500,0.5,0.5");
+            Rotate3D_opt t3d = r3dopt(tar.rotate3d);
+            s.rotate3d = r3dstr(o3d.degree+(t3d.degree-o3d.degree)*delta, t3d.x, t3d.y,
+                                o3d.resp+(t3d.resp-o3d.resp)*delta,
+                                o3d.axisX+(t3d.axisX-o3d.axisX)*delta,
+                                o3d.axisX+(t3d.axisY-o3d.axisY)*delta,
+                                o3d.transX+(t3d.transX-o3d.transX)*delta,
+                                o3d.transY+(t3d.transY-o3d.transY)*delta);
+        }
+        if(tar.bgcolor)
+            s.bgcolor = deltacolor(org.bgcolor, tar.bgcolor, delta);
+        if(tar.color)
+            s.color = deltacolor(org.color, tar.color, delta);
+        
+        if(tar.shadow){
+            Shadow_opt osd = shadopt(org.shadow?org.shadow:"0 0 0 #00000000");
+            Shadow_opt tsd = shadopt(tar.shadow);
+            const char* clr = string(osd.color).compare(string(tsd.color))==0? tsd.color:deltacolor(osd.color, tsd.color, delta);
+            s.shadow = shadstr(tsd.inset, osd.x+(tsd.x-osd.x)*delta,
+                               osd.y+(tsd.y-osd.y)*delta,
+                               osd.radius+(tsd.radius-osd.radius)*delta,
+                               clr);
+        }
+        if(tar.border){
+            Borderline_opt ob = bordopt(org.border?org.border:"0 solid #00000000 0");
+            Borderline_opt tb = bordopt(tar.border);
+            const char* clr = string(ob.color).compare(string(tb.color))==0? tb.color:deltacolor(ob.color, tb.color, delta);
+            s.border = bordstr(ob.w+(tb.w-ob.w)*delta, tb.style, clr, ob.radius+(tb.radius-ob.radius)*delta);
+        }
+        if(svgpath){
+            const char* osv = cstr(get(@"orgSvgPath"));
+            const char* tsv = cstr(get(@"targetSvgPath"));
+            vector<SVGPathCmd> cmds = SVG::tween(osv, tsv, delta);
+            CGPathRef path = SVG::path(cmds);
+            styles = s;
+            setSvgPath(path);
+            //setStyle(s);
+        }else
+            v,setStyle(s);
+    }, onEnd, opts);
+    return *this;
+
+}
+
+$& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd){return animate(ms, onStep, onEnd, @{});}
+
 $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd, Dic*opts){
     //var ele = this;
     if(opts[@"delay"]){
@@ -734,14 +831,13 @@ $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd,
         }
         
         $* o = ($*) [d[@"o"] pointerValue];
-        
         if(d[@"onStep"]){
             AnimateStepHandler onstep = d[@"onStep"];
             onStep(*o, delta);
         }
         int times = [d[@"times"] intValue];
         if(progress >= 1 || i>times){
-            onEnd(*o);
+            if(onEnd)onEnd(*o);
             return NO;
         }else return YES;
                 
@@ -851,18 +947,13 @@ void $::del(NSString*key){
 
 #pragma mark $ drawing
 
-void $::drawBorder(NSString *border){
+void $::setBorder(const char*border){
     if(border){
-        border = [border regexpReplace:@"  +" replace:@" "];
-        NSArray *parts = [border componentsSeparatedByString:@" "];
-        styles.borderWidth =[parts[0] floatValue];
-        if([parts count]>1){
-            styles.borderColor = cstr(parts[1]);
-            //radius
-            if([parts count]>2){
-                styles.cornerRadius = [parts[2] intValue];
-            }
-        }
+        Borderline_opt bo = bordopt(border);
+        styles.borderWidth = bo.w;
+        if(bo.color) styles.borderColor = bo.color;
+        if(bo.radius) styles.cornerRadius = bo.radius;
+        styles.borderStyle = bo.style;
     }
     if(!shapeLayer){ //drawing
         contentLayer.borderWidth =styles.borderWidth;
@@ -883,48 +974,22 @@ void $::drawBorder(NSString *border){
  format :[inset] x y radius [color]
  */
 
-void $::drawShadow(NSString* shadow){
-    if(!shadow || [shadow length]==0)return;
-    
-    NSArray *parts = [shadow componentsSeparatedByString:@" "];
-    int psize =(int)[parts count];
+void $::setShadow(const char* shadow){
     CALayer *layer = shapeLayer?shapeLayer:contentLayer;
-    if(psize>=4){
-        BOOL isInner = [parts[0] isEqualToString:@"inset"];
-        
-        int offset = isInner ? 1:0;
-        float x = [parts[0+offset] floatValue];
-        float y = [parts[1+offset] floatValue];
-        float r = [parts[2+offset] floatValue];
-        UIColor * cl = ([parts count] >= 4+offset)? [parts[3+offset] colorValue]:[UIColor darkGrayColor];
-        
+    if(shadow){
+        Shadow_opt opt = shadopt(shadow);
+        UIColor * cl = opt.color?str2color(opt.color):[UIColor darkGrayColor];
         view.clipsToBounds = NO;
-       
-
-        if(isInner){
-            //_innerShadow = [[InnerShadow alloc] initWithTarget:self x:x y:y r:r];
+        if(opt.inset){
             CALayer * s = [CALayer layer];
             s.zPosition = 8;
-            
-            /*
-            float o = styles.outlineWidth+styles.outlineSpace;
-            float left = view.borderLeft!=nil? view.borderLeft.width+o : o;
-            float top = view.borderTop!=nil? view.borderTop.width+o : o;
-            float right = view.borderRight!=nil? view.borderRight.width+o : o;
-            float bottom = view.borderBottom!=nil? view.borderBottom.width+o : o;
-            float mx = MAX(MAX(left, right),MAX(top, bottom));
-            s.frame = CGRectMake(left-x, top-y, view.bounds.size.width-left-right+2*x, view.bounds.size.height-top-bottom+2*y);
-            s.cornerRadius = styles.cornerRadius>mx ? styles.cornerRadius-mx : 0;
-            float ww = styles.borderWidth?styles.borderWidth+o:o;
-            */
-            
             float ww = styles.borderWidth?styles.borderWidth:0;
-            s.frame = CGRectMake(ww-x, ww-y, contentLayer.bounds.size.width-2*ww+2*x, contentLayer.bounds.size.height-2*ww+2*y);
+            s.frame = CGRectMake(ww-opt.x, ww-opt.y, contentLayer.bounds.size.width-2*ww+2*opt.x, contentLayer.bounds.size.height-2*ww+2*opt.y);
             s.cornerRadius = styles.cornerRadius>ww ? styles.cornerRadius-ww : 0;
-            s.borderWidth = MAX(x, y);
+            s.borderWidth = MAX(opt.x, opt.y);
             s.borderColor = [UIColor colorWithWhite:1 alpha:1].CGColor;
-            s.shadowOffset = CGSizeMake(x/2, y/2);
-            s.shadowRadius = r;
+            s.shadowOffset = CGSizeMake(opt.x/2, opt.y/2);
+            s.shadowRadius = opt.radius;
             s.shadowOpacity = 1.0;
             s.shadowColor = cl.CGColor;
             s.masksToBounds = YES;
@@ -932,12 +997,10 @@ void $::drawShadow(NSString* shadow){
             layer.masksToBounds = YES;
             s = nil;
         }else{
-            layer.shadowOffset = CGSizeMake(x, y);
-            layer.shadowRadius = r;
+            layer.shadowOffset = CGSizeMake(opt.x, opt.y);
+            layer.shadowRadius = opt.radius;
             layer.shadowColor = cl.CGColor;
-            //!!! layer.shadowOpacity is very slow sometime and use much more memory
-            //self.layer.shadowOpacity = [parts count]>4? [parts[5] floatValue]:0.7;
-            layer.shadowOpacity = 0.7;
+            layer.shadowOpacity = 1.0;
         }
         cl = nil;
     }else{
@@ -946,39 +1009,40 @@ void $::drawShadow(NSString* shadow){
         layer.shadowColor = [UIColor clearColor].CGColor;
         layer.shadowOpacity = 0;
     }
-    parts = nil;
-    
 }
 
-void $::drawGradient(NSString *value){
+void $::setGradient(const char* value){
+    
     CAGradientLayer *gradient = [CAGradientLayer layer];
     CALayer *layer = shapeLayer?shapeLayer:contentLayer;
     gradient.frame = layer.bounds;
     gradient.cornerRadius = styles.cornerRadius;
     
-    value = [value regexpReplace:@"  +" replace:@" "];
-    NSArray *parts = [value componentsSeparatedByString:@" "];
-    int size =(int)[parts count];
+    string grad(value);
+    grad = regex_replace(grad,regex("\\s+")," ");
+    vector<string> parts=splitx(grad, regex("\\s"));
+    
+    int size = parts.size();
     
     NSMutableArray *colors=[NSMutableArray array];
     NSMutableArray *locations=[NSMutableArray array];
     int degree = 0;
-    for (int i=0;i<size; i++) {
-        NSString *v = parts[i];
-        
-        if([v contains:@":"]){
-            NSArray *vps = [v componentsSeparatedByString:@":"];
-            [colors addObject:(id)[vps[0] colorValue].CGColor];
-            [locations addObject:[NSNumber numberWithFloat:[vps[1] floatValue]]];
+    for (int i=0;i<size;i++) {
+        string v = parts[i];
+        if(strhas(v.c_str(), ":")){
+            int sidx = (int)v.find(':',0);
+            string cpart = v.substr(0, sidx);
+            [colors addObject:(id)(str2color(cpart.c_str()).CGColor)];
+            cpart = v.substr(sidx+1,v.length()-sidx-1);
+            [locations addObject:@(stof(cpart))];
         }else{
-            if(i==size-1 && ![v contains:@"#"]){
-                degree = [v intValue];
+            if(i==size-1 && !strhas(v.c_str(), "#")){
+                degree = stof(v);
             }else{
-                [colors addObject:(id)[v colorValue].CGColor];
+                [colors addObject:(id)(str2color(v.c_str()).CGColor)];
                 [locations addObject:[NSNumber numberWithFloat:((float)i/(float)(size-1))]];
             }
         }
-        
     }
     gradient.colors = colors;
     gradient.locations = locations;
@@ -987,15 +1051,13 @@ void $::drawGradient(NSString *value){
     [layer insertSublayer:gradient atIndex:0];
 }
 
-void $::drawOutline(NSString * outline){
-    outline = [outline regexpReplace:@"  +" replace:@" "];
-    NSArray *parts = [outline componentsSeparatedByString:@" "];
-    if([parts count]==3){
-        styles.outlineWidth = [parts[0] floatValue];
-        styles.outlineSpace = [parts[1] floatValue];
-        styles.outlineColor = cstr(parts[2]);
-    }
-    NSString *cl = [NSString stringWithUTF8String:styles.outlineColor];
+void $::setOutline(const char * s){
+    Outline_opt op = olopt(s);
+    styles.outlineWidth = op.w;
+    styles.outlineColor = op.color;
+    styles.outlineSpace = op.space;
+    
+    NSString *cl = str(styles.outlineColor);
     UIColor *oColor;
     if([cl contains:@","]||[cl contains:@"#"]){//color
         oColor = [cl colorValue];
@@ -1025,21 +1087,20 @@ void $::drawOutline(NSString * outline){
  draw svg path to view.
  H V S T are unsupported
  */
-void $::drawSvgPath (const char* svgpathcmd){
-    using namespace std;
+void $::setSvgPath (const char* svgpathcmd){
     CGPathRef path = SVG::path(svgpathcmd);
-    
+    return setSvgPath(path);
+}
+
+void $::setSvgPath (CGPathRef path){
     if(shapeLayer){
         [shapeLayer removeFromSuperlayer];
         shapeLayer=nil;
     }
-    
     shapeLayer = [CAShapeLayer layer];
     shapeLayer.frame = CGRectMake(0, 0, contentLayer.frame.size.width,contentLayer.frame.size.height);
     shapeLayer.path = path;
-    
     CGPathRelease(path);
-    
     this->setStyle(this->styles);
     [contentLayer addSublayer:shapeLayer];
 }
@@ -1430,12 +1491,12 @@ __attribute__((overloadable)) $& img(id src, Styles s, std::initializer_list<Sty
 
 
 __attribute__((overloadable)) $& svgp(NSString* cmds, Styles s){
-    $* o=(new $())->initView(s);o->drawSvgPath([cmds UTF8String]);return *o;
+    $* o=(new $())->initView(s);o->setSvgPath(cstr(cmds));return *o;
 }
-__attribute__((overloadable)) $& svgp(NSString* cmds, Styles *sp){$& o=(new $())->setStyle(*sp);o.drawSvgPath([cmds UTF8String]);return o;}
-__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, Styles *sp){$& o=(new $())->setStyle(style(&s,sp));o.drawSvgPath([cmds UTF8String]);return o;}
-__attribute__((overloadable)) $& svgp(NSString* cmds, std::initializer_list<Styles *>ext){$& o=(new $())->setStyle({},ext);o.drawSvgPath([cmds UTF8String]);return o;}
-__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, std::initializer_list<Styles *>ext){$& o=(new $())->setStyle(s,ext);o.drawSvgPath([cmds UTF8String]);return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles *sp){$& o=(new $())->setStyle(*sp);o.setSvgPath(cstr(cmds));return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, Styles *sp){$& o=(new $())->setStyle(style(&s,sp));o.setSvgPath(cstr(cmds));return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, std::initializer_list<Styles *>ext){$& o=(new $())->setStyle({},ext);o.setSvgPath(cstr(cmds));return o;}
+__attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, std::initializer_list<Styles *>ext){$& o=(new $())->setStyle(s,ext);o.setSvgPath(cstr(cmds));return o;}
 
 
 __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles listStyle){
@@ -1488,36 +1549,28 @@ void memuse(const char* msg) {
     NSLog(@"MEM : %@ %u KB",[NSString stringWithUTF8String:msg],info.resident_size/1024);
 }
 
-NSString * str(char * cs){return cs!=nil?[NSString stringWithCString:cs encoding:NSASCIIStringEncoding]:nil;}
-
-char * cstr(NSString * cs){
-    return const_cast<char*>([cs UTF8String]);
+NSString * str(const char * cs){return cs?
+    [NSString stringWithCString:cs encoding:NSASCIIStringEncoding]:nil;
 }
 
-UIColor * str2color(char * s){
-    string cs(s);
-    if(strstarts(s, "#")){
-        int red, green, blue, alpha=255;
-        sscanf(cs.substr(1,2).c_str(), "%x", &red);
-        sscanf(cs.substr(3,2).c_str(), "%x", &green);
-        sscanf(cs.substr(5,2).c_str(), "%x", &blue);
-        if(cs.size()==9) sscanf(cs.substr(7,2).c_str(), "%x", &alpha);
-        return [UIColor colorWithRed:(float)red/255 green:(float)green/255 blue:(float)blue/255 alpha:(float)alpha/255];
-    }else if(strhas(s,",")==true){
-        //cs.erase(remove_if(cs.begin(), cs.end(), [](char x){return std::isspace(x);}), cs.end());
-        cs = regex_replace(cs, regex("\\s"), "");
-        float clr []= {0,0,0,1};
-        int start = 0, end = 0, i=0;
-        do {
-            end = (int)cs.find(',', start);
-            string sc =cs.substr(start, end - start);
-            clr[i] = ((float)std::stoi(sc))/255;
-            start = end + 1;
-            i++;
-        }while(end != string::npos);
-        return [UIColor colorWithRed:clr[0] green:clr[1] blue:clr[2] alpha:clr[3]];
+char * cstr(NSString * cs){
+    return const_cast<char*>([cs cStringUsingEncoding:NSASCIIStringEncoding]);
+}
+
+vector<string> splitx(const string str, const regex regex){
+    vector<string> result;
+    sregex_token_iterator it( str.begin(), str.end(), regex, -1 );
+    sregex_token_iterator reg_end;
+    for ( ;it != reg_end; ++it) {
+        if (!it->str().empty())
+            result.emplace_back( it->str() );
     }
-    return [UIColor colorWithWhite:0 alpha:0];
+    return result;
+}
+
+UIColor * str2color(const char * s){
+    RGBA r = rgbaf(s);
+    return [UIColor colorWithRed:r.r green:r.g blue:r.b alpha:r.a];
 }
 
 char* dec2hex(int dec, int bits){
@@ -1540,6 +1593,35 @@ char * colorfstr(float r, float g, float b, float a){
     return colorstr(r*255, g*255, b*255, a*255);
 }
 
+RGBA rgbaf(const char* s){
+    string cs(s);
+    if(strstarts(s, "#")){
+        int red, green, blue, alpha=255;
+        sscanf(cs.substr(1,2).c_str(), "%x", &red);
+        sscanf(cs.substr(3,2).c_str(), "%x", &green);
+        sscanf(cs.substr(5,2).c_str(), "%x", &blue);
+        if(cs.size()==9) sscanf(cs.substr(7,2).c_str(), "%x", &alpha);
+        return {(float)red/255,(float)green/255,(float)blue/255,(float)alpha/255};
+    }else if(strhas(s,",")==true){
+        cs = regex_replace(cs, regex("\\s"), "");
+        float clr []= {0,0,0,1};
+        int start = 0, end = 0, i=0;
+        do {
+            end = (int)cs.find(',', start);
+            string sc =cs.substr(start, end - start);
+            clr[i] = ((float)std::stoi(sc))/255;
+            start = end + 1;
+            i++;
+        }while(end != string::npos);
+        return {clr[0],clr[1],clr[2],clr[3]};
+    }
+    return {0,0,0,0};
+}
+RGBA rgba(const char* s){
+    RGBA res = rgbaf(s);
+    return {res.r*255, res.g*255, res.b*255, res.a*255};
+}
+
 /*
  char** split(char *s, const char* delim){
  char * pch;
@@ -1554,17 +1636,17 @@ char * colorfstr(float r, float g, float b, float a){
  return arr;
  }*/
 
-bool strstarts(char* s1, const char* s2){
+bool strstarts(const char* s1, const char* s2){
     string ss1(s1), ss2(s2);
     return ss2.size() <= ss1.size() && ss1.compare(0, ss2.size(), ss2) == 0;
 }
 
-bool strends(char* s1, const char* s2){
+bool strends(const char* s1, const char* s2){
     string ss1(s1), ss2(s2);
     return ss2.size() <= ss1.size() && ss1.compare(ss1.size()-ss2.size(), ss2.size(), ss2) == 0;
 }
 
-bool strhas(char* s1, const char* s2){
+bool strhas(const char* s1, const char* s2){
     if(!s1 || !s2) return false;
     string ss1(s1), ss2(s2);
     return (ss1.find(ss2) != string::npos);
@@ -1581,7 +1663,7 @@ char * f2str(float f){
 }
 
 
-char * strs(int num, char* s ,...){
+char * strs(int num, const char* s ,...){
     va_list ap;
     va_start(ap, s);
     string st(s);
@@ -1661,7 +1743,7 @@ __attribute__((overloadable)) Styles style(Styles *custom, std::initializer_list
     return o;
 }
 
-Styles str2style(char * s){
+Styles str2style(const char * s){
     string cs(s);
     regex_replace(cs, regex("\\s*;\\s*"), "");
     Styles s0 = {};
@@ -1727,6 +1809,125 @@ Styles str2style(char * s){
     }while(end != string::npos);
     return s0;
 }
+
+NSValue * style2val(Styles s){
+    return [NSValue value:&s withObjCType:@encode(Styles)];
+}
+Styles val2style(NSValue *v){
+    Styles s;
+    [v getValue:&s];
+    return s;
+}
+
+/*
+ build rotate3d string with data
+ */
+char* r3dstr(float degree, float x, float y, int resp, float axisX, float axisY, float transX, float transY){
+    return cstr([NSString stringWithFormat:@"%f,%f,%f,0,%d,%f,%f,%f,%f,0", degree, x, y,resp, axisX, axisY, transX, transY]);
+}
+/*
+ string to rotate3d options
+ */
+Rotate3D_opt r3dopt(const char * rotate3dStr){
+    string rotate(rotate3dStr);
+    //degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
+    float p[] = {0,0,0,0,500,0.5,0.5,0,0,0};
+    rotate = regex_replace(rotate, regex("\\s*,\\s*"), ",");
+    int start = 0, end = 0, i=0;
+    do {
+        end = (int)rotate.find(',', start);
+        if(end<0)break;
+        string sc =rotate.substr(start, end - start);
+        p[i] = stof(sc);
+        start = end + 1;
+        i++;
+    }while(end != string::npos);
+    return {p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9]};
+}
+
+/*
+ build shadow option string with parameters
+ */
+char* shadstr(bool inset, float x, float y, float blur, const char*color){
+    return cstr([NSString stringWithFormat:@"%@%f %f %f %@",inset?@"inset ":@"",x,y,blur,str(color)]);
+}
+
+/*
+ string to shadow options
+ */
+Shadow_opt shadopt(const char*s){
+    if(!s)return {false, 0, 0, 0, NULL};
+    string shad(s);
+    
+    string p[5] = {};
+    shad = regex_replace(shad, regex("\\s+"), ",");
+    int start = 0, end = 0, i=0;
+    do {
+        end = (int)shad.find(',', start);
+        if(end<0)break;
+        p[i++] =shad.substr(start, end - start);
+        start = end + 1;
+    }while(end != string::npos && i<=5);
+    p[i++] =shad.substr(start, shad.length() - start);
+    
+    return (p[0].compare("inset")==0) ?
+        (Shadow_opt){true,stof(p[1]),stof(p[2]),stof(p[3]),const_cast<char*>(p[4].c_str())} :
+        (Shadow_opt){false,stof(p[0]),stof(p[1]),stof(p[2]),const_cast<char*>(p[3].c_str())};
+    
+}
+
+
+//styles : border
+char* bordstr(float w, LineStyles style, const char*color, float radius){
+    const char* snames[3] = {"solid","dashed","dotted"};
+    const char* ststr = snames[(int)style];
+    return cstr([NSString stringWithFormat:@"%f %@ %@ %f",w,str(ststr),str(color),radius]);
+}
+/*
+ string to borderline options
+ */
+Borderline_opt bordopt(const char*s){
+    string border(s);
+    border = regex_replace(border,regex("\\s+")," ");
+    vector<string> parts = splitx(border, regex("\\s+"));
+    Borderline_opt bo = {0,"#00000000",l_solid,0};
+    int size = parts.size();
+    if(size==0)return bo;
+    if(regex_match(parts[0],regex("[0-9\\.]+")))
+        bo.w =stof(parts[0]);
+    else
+        cout << parts[0] << "---"<< border<< endl;
+    
+    for (int i=1; i<size; i++) {
+        const char * cst = parts[i].c_str();
+        if(strhas(cst, "#")){
+            bo.color = const_cast<char*>(cst);
+        }else if(parts[i].compare("solid")==0){
+            bo.style = l_solid;
+        }else if(parts[i].compare("dashed")==0){
+            bo.style = l_dashed;
+        }else if(parts[i].compare("dotted")==0){
+            bo.style = l_dotted;
+        }else if(regex_match(parts[i],regex("[0-9\\.]+"))){
+            bo.radius = stof(parts[i]);
+        }
+    }
+    return bo;
+}
+
+//styles : outline
+char* olstr(float w, LineStyles style, const char*color, float space){
+    return bordstr(w, style, color, space);
+}
+/*
+ string to outline options
+ */
+Outline_opt olopt(const char*s){
+    Borderline_opt bo = bordopt(s);
+    return {.w=bo.w,.style=bo.style,.color=bo.color,.space=bo.radius};
+}
+
+
 
 //milliseconds
 long long milliseconds(){
