@@ -60,7 +60,7 @@ typedef struct{
     AnimationDelta delta;
     AnimationStyle style;
     int delay;
-}Animete_opt;
+}animete_opt;
 
 typedef struct{
     float r;
@@ -80,7 +80,7 @@ typedef struct{
     float transX;
     float transY;
     float transZ;
-}Rotate3D_opt;
+}Rotate3DOpt;
 
 typedef struct{
     bool  inset;
@@ -88,27 +88,27 @@ typedef struct{
     float y;
     float radius;
     char* color;
-}Shadow_opt;
+}ShadowOpt;
 
 typedef struct{
     float w;
     char* color;
     LineStyles style;
-}Line_opt;
+}LineOpt;
 
 typedef struct{
     float w;
     char* color;
     LineStyles style;
     float space;
-}Outline_opt;
+}OutlineOpt;
 
 typedef struct{
     float w;
     char* color;
     LineStyles style;
     float radius;
-}Borderline_opt;
+}BorderlineOpt;
 
 typedef struct{
     float   x;  //left

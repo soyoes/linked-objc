@@ -134,7 +134,8 @@ public:
     CGRect rect();
     
     id get(NSString*key);
-    void set(NSString*key, id value);
+    __attribute__((overloadable)) $& set(NSString*key, id value);
+    __attribute__((overloadable)) $& set(Dic*d);
     void del(NSString*key);
     
     void setShadow(const char* shadow);
@@ -287,19 +288,19 @@ Styles val2style(NSValue *v);
 
 //styles : rotate 3d opts
 char* r3dstr(float degree, float x, float y, int resp, float axisX, float axisY, float transX, float transY);
-Rotate3D_opt r3dopt(const char * rotate3dStr);
+Rotate3DOpt r3dopt(const char * rotate3dStr);
 
 //styles : shadow
 char* shadstr(bool inset, float x, float y, float blur, const char*color);
-Shadow_opt shadopt(const char*);
+ShadowOpt shadopt(const char*);
 
 //styles : border
 char* bordstr(float w, LineStyles style, const char*color, float radius);
-Borderline_opt bordopt(const char*s);
+BorderlineOpt bordopt(const char*s);
 
 //styles : outline
 char* olstr(float w, LineStyles style, const char*color, float space);
-Outline_opt olopt(const char*s);
+OutlineOpt olopt(const char*s);
 
 
 //time

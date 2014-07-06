@@ -59,13 +59,14 @@
 + (UIImage *)imageWithAsset:(ALAsset *)asset;
 - (UIImage *)imageWithLabelAtPoint:(UILabel *)label point:(CGPoint)pnt;
 - (UIImage *)imageWithBorder:(float)borderWidth color:(UIColor*)borderColor;
-- (UIImage *)imageByScalingProportionallyToMinimumSize:(CGSize)targetSize;
-- (UIImage *)imageByScalingProportionallyToSize:(CGSize)targetSize;
-- (UIImage *)imageByScalingToSize:(CGSize)targetSize;
 - (UIImage *)imageRotatedByRadians:(CGFloat)radians;
 - (UIImage *)imageRotatedByDegrees:(CGFloat)degrees;
 - (UIImage *)imageWithCorner:(CGFloat)radius toBounds:(CGRect)bounds borderWidth:(float)borderWidth borderColor:(CGColorRef)borderColor;
+
+
+- (UIImage *)imageByScale:(CGSize)size style:(int)style;
 - (UIImage *)imageWithBlendColor:(UIColor*)color;
+- (UIImage *)imageWithBlendColor:(UIColor*)color mode:(CGBlendMode)mode;
 - (UIImage *)imageWithBlendImage:(NSString*)imgname alpha:(float)alpha;
 - (UIImage *)merge:(UIImage*)thumb;
 

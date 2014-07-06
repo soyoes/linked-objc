@@ -255,42 +255,47 @@ void layers_example($& target){
 //Animations(Motions)
 void image_editor_example($& target){
     NSLog(@"motion");
-    UIImage * org = [UIImage imageNamed:@"kodaru.jpg"];
-    UIImage * display = [org imageByScalingProportionallyToMinimumSize:{600,400}];
+    
+    Arr* imgs = @[@"kodaru.jpg",@"mountain.jpg",@"sea.jpg",@"people.jpg"];
+    
+    static UIImage * org = [UIImage imageNamed:imgs[2]];
+    UIImage * display = [org imageByScale:{600,320} style:0];
     static UIImage * ef = display;
     
-    $& im = img(org, {.ID=@"img",.x=10,.y=20,.w=300,.h=200})>>target;
+    $& im = img(org, {.ID=@"img",.x=0,.y=0,.w=320,.h=320,.bgcolor="#000000",.contentMode=m_FIT})>>target;
     NSValue *imp = [NSValue valueWithPointer:&im];
     
-    UIImage * thumb = [org imageByScalingProportionallyToMinimumSize:{120,120}];
+    UIImage * thumb = [org imageByScale:{120,120} style:1];
     
     struct Effects {
         float matrix[3][3];
         float contrast;
         char* blendColor;
+        CGBlendMode mode;
         NSString* blendImage;
         float imageAlpha;
     };
     
     static Effects efs[11]={
-        {{{1,0,0},{0,1,0.2},{.1,.1,1}},1.4},
-        {{{1,0.1,0.1},{0.1,1,0.1},{.1,.1,.8}},1.4,NULL,@"radial.png",0.5},
-        {{{0.8,.3,0.1},{0,.8,0.2},{0.1,.2,1}},1.2,NULL,@"radial.png",0.6},
-        {{{0.7,0,0},{0.1,0.6,0},{0.2,0.2,0.5}},1.1,"#CCCC66",@"radial.png",0.5},
-        {{{0.9,.3,0.2},{0.2,.7,0.3},{0.2,.3,.5}},1.1,NULL,@"radial.png",1},
-        {{{0.7,0,0},{0.2,0.6,0.2},{0.2,0.2,0.6}},1.1,"#CC6666"},
-        {{{0.6,0.2,0.15},{0.2,0.6,0.15},{0.15,0.1,0.65}},1.1,"#CC9988"},
-        {{{0.6,0.2,0.2},{0.2,0.6,0.2},{0.2,0.2,0.6}},1.1,NULL,@"radial.png",1},
-        {{{0.8,0.1,0.1},{0.1,0.8,0.1},{0.1,0.1,0.8}},0.9,"#CC9999"},
+        {{{0.5,0.25,0.25},{0.2,0.6,0.2},{0,0.0,1.0}},1.3,"#aaaa99",kCGBlendModeOverlay,@"radial.png",0.2},
+        {{{0.5,0.25,0.25},{0.0,1,0.0},{.1,.2,.7}},1.3,NULL,kCGBlendModeOverlay,@"radial.png",0.5},
+        {{{0.6,0.2,0.2},{0,1,0},{0.2,.2,.6}},1.2,"#aa99aa66",kCGBlendModeOverlay,@"radial.png",0.6},
+        {{{0.8,0,0},{0.1,0.8,0.1},{0.2,0.2,0.6}},1.2,"#cccc9966",kCGBlendModeOverlay,@"radial.png",0.5},
+        {{{0.6,0.2,0.2},{0.2,.6,0.2},{0,0,1}},1.1,"#99ffff33",kCGBlendModeOverlay,@"radial.png",1},
+        {{{0.8,0,0},{0.2,0.6,0.2},{0.5,0.1,0.5}},1.1,"#ff886666",kCGBlendModeOverlay},
+        {{{0.6,0.2,0.15},{0.2,0.6,0.15},{0.15,0.1,0.65}},1.1,"#CC9988",kCGBlendModeOverlay},
+        {{{0.6,0.2,0.2},{0.2,0.6,0.2},{0.2,0.2,0.6}},1.1,NULL,kCGBlendModeOverlay,@"radial.png",1},
+        {{{0.8,0.1,0.1},{0.1,0.8,0.1},{0.1,0.1,0.8}},0.9,"#CC9999",kCGBlendModeOverlay},
         //{{{.393,.769,.189},{.349,.686,.168},{.272,.534,.131}},1.1,"#666600FF"}, //sepia
-        {{{0.3,0.6,0.3},{0.3,0.6,0.3},{0.3,0.6,0.3}},1.1,"#996633"}, //sepia
+        {{{0.3,0.6,0.3},{0.3,0.6,0.3},{0.3,0.6,0.3}},1.1,"#996633",kCGBlendModeOverlay}, //sepia
         {{{0.3,0.6,0.2},{0.3,0.6,0.2},{0.3,0.6,0.2}},1.3} //monochrome
     };
     
     UIImage* (^EffectFunc)(Effects,UIImage*) = ^UIImage*(Effects e,UIImage *img){
         @autoreleasepool {
+            
             ef = [img colorMix:e.matrix contrast:e.contrast];
-            if(e.blendColor)ef = [ef imageWithBlendColor:str2color(e.blendColor)];
+            if(e.blendColor)ef = [ef imageWithBlendColor:str2color(e.blendColor) mode:e.mode];
             if(e.blendImage)ef = [ef imageWithBlendImage:e.blendImage alpha:e.imageAlpha?MIN(e.imageAlpha,1):1];
             return ef;
         }
@@ -305,22 +310,115 @@ void image_editor_example($& target){
             Effects e = efs[i];
             UIImage * ef = EffectFunc(e,display);
             im->setImage(ef);
+            im->setStyle({.contentMode=m_FIT});
         }
     };
     
     //bar bg
     box({0,400,320,64,0,"#000000"})>>target;
     $& bar = sbox({0,400,320,64,1}) >> target;
-    img(thumb,{.x=2,.y=2,.h=60,.w=60,.contentMode=m_FIT}).bind(@"tap", gh, @{@"i":@(-1),@"im":imp}) >> bar;
+    img(thumb,{.x=2,.y=2,.h=60,.w=60,.contentMode=m_CROP_FIT}).bind(@"tap", gh, @{@"i":@(-1),@"im":imp}) >> bar;
     for (int i=0;i<11;i++) {
         Effects e = efs[i];
         UIImage *ef = EffectFunc(e,thumb);
-        img(ef,{.x=(i+1)*64+2.0f,.y=2,.h=60,.w=60,.contentMode=m_FIT}).bind(@"tap", gh, @{@"i":@(i),@"im":imp}) >> bar;
+        img(ef,{.x=(i+1)*64+2.0f,.y=2,.h=60,.w=60,.contentMode=m_CROP_FIT}).bind(@"tap", gh, @{@"i":@(i),@"im":imp}) >> bar;
         ef = nil;
     }
 
     bar.setContentSize(12*64, 64);
 }
+
+
+void image_editor_example_mixor($& target){
+    NSLog(@"motion");
+    
+    Arr* imgs = @[@"kodaru.jpg",@"mountain.jpg",@"sea.jpg",@"people.jpg"];
+    
+    static UIImage * org = [UIImage imageNamed:imgs[1]];
+    UIImage * display = [org imageByScale:{600,320} style:0];
+    static UIImage * ef = display;
+    
+    $& im = img(org, {.ID=@"img",.x=0,.y=0,.w=320,.h=320,.bgcolor="#000000",.contentMode=m_FIT})>>target;
+    NSValue *imp = [NSValue valueWithPointer:&im];
+
+    struct Effects {
+        float matrix[3][3];
+        float contrast;
+        char* blendColor;
+        NSString* blendImage;
+        float imageAlpha;
+    };
+
+    
+    UIImage* (^EffectFunc)(Effects,UIImage*) = ^UIImage*(Effects e,UIImage *img){
+        @autoreleasepool {
+            ef = [img colorMix:e.matrix contrast:e.contrast];
+            if(e.blendColor)ef = [ef imageWithBlendColor:str2color(e.blendColor) mode:kCGBlendModeMultiply];
+            if(e.blendImage)ef = [ef imageWithBlendImage:e.blendImage alpha:e.imageAlpha?MIN(e.imageAlpha,1):1];
+            return ef;
+        }
+    };
+
+    //static Effects eff = {{{0.6,0.2,0.2},{0.2,0.6,0.2},{0.2,0.2,0.6}},1};
+    static Effects eff = {{{1,0,0},{0,1,0},{0,0,1}},1};
+    static float masks[3]={1,1,1};
+
+    $& bs = box({.y=320,.w=320,.h=220,.bgcolor="#000000"})>>target;
+    for (int i=0; i<13; i++) {
+        float x = i%3*100+i%3*10;
+        float y = floorf(i/3)*30+15;
+        int row = floor(i/3);
+        int col = i%3;
+        NSString*lbid = [NSString stringWithFormat:@"label_%d", i];
+        float v =i>9?1:eff.matrix[row][col];
+        
+        Arr* lbs= @[@"R",@"G",@"B",@"Mask",@"Contrast"];
+        
+        Dic * btnValues = @{@"y":@(y+2.5f),@"x":@(x),@"i":@(i),@"label_id":lbid,@"v":@(v)};
+        
+        label(i<12?[NSString stringWithFormat:@"(%@_%d):%.2f",lbs[row],col+1,v]:[NSString stringWithFormat:@"(%@):%.2f",lbs[row],v],
+              {.ID=lbid,.x=x,.y=y-15,.w=100,.h=20,.font="ArialMT,10",.color="#ffffff",.textAlign="center"}) >> bs;
+        
+        box({.x=x,.y=y,.w=100,.h=5,.cornerRadius=2,.border="1 #ffffff"})>> bs;
+        $& btn = box({.x=x+v*50,.y=y-2.5f,.w=10,.h=10,.bgcolor="#ffffff"})
+            .set(btnValues)
+            .dragable(^(GR *g, $ & v, Dic *p) {
+                CGPoint pt = [g locationInView:bs.view];
+                float ox = [v.get(@"x")  floatValue];
+                float oy = [v.get(@"y")  floatValue];
+                float x = pt.x>ox+100?ox+100:(pt.x<ox?ox:pt.x);
+                v.view.center=CGPointMake(x, oy);
+                float nv =(x-ox)/50;
+                
+                v.set(@"v",@(nv));
+                int i = [v.get(@"i")  intValue];
+                if(i>=9&&i<12){
+                    masks[i-9]=nv;
+                    $::getView(v.get(@"label_id"), @"ViewController")->setText([NSString stringWithFormat:@"%@",str(dec2hex(nv*255/2, 2))]);
+                }else{
+                    $::getView(v.get(@"label_id"), @"ViewController")->setText([NSString stringWithFormat:@"%.2f",nv]);
+                }
+            }, ^(GR *g, $ & v, Dic *p) {
+                float nv =[v.get(@"v")  floatValue];
+                int i = [v.get(@"i")  intValue];
+                if(i==12){//contrast
+                    eff.contrast = nv;
+                }else if(i>=9){
+                    eff.blendColor = const_cast<char*>(colorfstr(masks[0]/2, masks[1]/2, masks[2]/2, 0.3)) ;
+                }else{
+                    int row = floor(i/3);
+                    int col = i%3;
+                    eff.matrix[row][col] = nv;
+                }
+                UIImage * em = EffectFunc(eff, org);
+                im.setImage(em);
+                em=nil;
+            })
+            >> bs;
+    }
+    
+}
+
 
 //Animations(Transform)
 void animation_example($& target){
@@ -402,10 +500,10 @@ void svg_example($& target){
     NSLog(@"svg");
     static const char* shapes[6] = {
         "M 0 0 L200 0 L 200 200 L 0 200 Z",
-        "M 35.4666 111.6678 C 6.375 102 17.976 20.613 64.3836 34.5 C 68.6892 7.4298 122.655 11.8236 122.3022 34.5 C 156.1404 5.4966 199.3836 63.3288 170.3784 92.3322 C 205.1832 106.3938 169.9392 182.1558 141.375 169.5 C 139.089 190.5942 88.0248 197.976 83.5428 169.5 C 54.6276 199.911 -5.6652 153.1524 35.4666 111.6678 Z",
         "M 12 72.012 L 72.012 72.012 L 72.012 12 L 131.988 12 L 131.988 72.012 L 192 72.012 L 192 131.988 L 131.988 131.988 L 131.988 192 L 72.012 192 L 72.012 131.988 L 12 131.988 Z",
         "M 102 12 L 122.11605 74.18847 L 187.21297 74.18847 L 134.548455 112.62306 L 154.66451 174.81153 L 102 136.37694 L 49.33549 174.81153 L 69.451545 112.62306 L 16.787034 74.18847 L 81.88395 74.18847 Z",
         "M 102 57 C 78.6216 1.101 12.351 13.9332 12 78.6216 C 11.649 115.0086 43.6404 127.839 64.7346 142.2534 C 85.125 156.1404 99.8904 175.125 102 182.8596 C 104.1096 175.125 120.2808 155.4384 139.2654 141.5514 C 160.0086 126.2586 192.351 113.9538 192 78.6216 C 191.649 13.4058 124.149 3.036 102 57 Z",
+        "M 35.4666 111.6678 C 6.375 102 17.976 20.613 64.3836 34.5 C 68.6892 7.4298 122.655 11.8236 122.3022 34.5 C 156.1404 5.4966 199.3836 63.3288 170.3784 92.3322 C 205.1832 106.3938 169.9392 182.1558 141.375 169.5 C 139.089 190.5942 88.0248 197.976 83.5428 169.5 C 54.6276 199.911 -5.6652 153.1524 35.4666 111.6678 Z",
         "M 162.66523 169.65428 C 155.17486 180.6263 147.42614 191.53232 135.19321 191.76032 C 123.15254 191.98832 119.2932 184.6163 105.55419 184.6163 C 91.801154 184.6163 87.4992 191.53232 76.131468 191.98832 C 64.321122 192.43232 55.340694 180.1383 47.788242 169.21428 C 32.358888 146.88024 20.58259 106.064166 36.42051 78.518117 C 44.263363 64.838093 58.316813 56.182078 73.54589 55.954077 C 85.14394 55.740077 96.101105 63.78609 103.18491 63.78609 C 110.28073 63.78609 123.57913 54.126074 137.56048 55.542077 C 143.41258 55.784077 159.83731 57.90408 170.38591 73.36611 C 169.55276 73.91611 150.78078 84.85613 151.009095 107.64817 C 151.23941 134.87422 174.82606 143.92423 175.10044 144.04623 C 174.88614 144.68623 171.32922 156.96626 162.66523 169.65428 M 111.30214 25.634024 C 117.7751 18.034011 128.71624 12.380001 137.74474 12 C 138.898334 22.558019 134.65847 33.130037 128.3958 40.74805 C 122.121115 48.354064 111.8489 54.278074 101.76895 53.486073 C 100.39905 43.156055 105.480085 32.384036 111.30214 25.634024",
     };
     int __block i=0;

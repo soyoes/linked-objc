@@ -239,23 +239,11 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     //NSLog(@"fontsize=%f",label.font.pointSize);
     
     UIFont *f = [UIFont fontWithName:label.font.fontName size:label.font.pointSize*scale];
-    /*
-    
-    if([label isKindOfClass:[UIVerticalLabel class]]){
-        UIVerticalLabel *lb = [[UIVerticalLabel alloc] initWithText:label.text font:f center:CGPointMake(0, 0) margin:5];
-        lb.isVertical = ((UIVerticalLabel *)label).isVertical;
-        lb.textColor = label.textColor;
-        lb.bounds = bounds;
-        
-        [lb drawTextInRect:bounds];
-    }else{
-    */
-        UILabel *lb = [[UILabel alloc] initWithFrame:bounds];
-        lb.text = label.text;
-        lb.font = f;
-        lb.textColor = label.textColor;
-        [lb drawTextInRect:bounds];
-    //}
+    UILabel *lb = [[UILabel alloc] initWithFrame:bounds];
+    lb.text = label.text;
+    lb.font = f;
+    lb.textColor = label.textColor;
+    [lb drawTextInRect:bounds];
     UIImage *img= UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return img;
@@ -318,7 +306,7 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     UIGraphicsEndImageContext();
     return img;
 }
-
+/*
 - (UIImage *)imageByScalingProportionallyToMinimumSize:(CGSize)targetSize {
     
     UIImage *sourceImage = self;
@@ -441,44 +429,36 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     
     return newImage ;
 }
+*/
 
-
-- (UIImage *)imageByScalingToSize:(CGSize)targetSize {
+/**
+ style : 0:fit, 1:fit+crop, 2:fill
+ */
+- (UIImage *)imageByScale:(CGSize)size style:(int)style{
+    CGFloat w = self.size.width,
+            h = self.size.height,
+            tw = size.width,
+            th = size.height;
+    CGRect r;
+    switch (style) {
+        case 0:
+            r = (w/h>tw/th)?CGRectMake(0, 0, tw, h/w*tw)
+            :CGRectMake(0,0,w/h*th, th);
+            break;
+        case 1:
+            r= (w/h>tw/th)?CGRectMake(0, 0, w*th/h, th)
+            :CGRectMake(0,0,tw, h*tw/w);
+            break;
+        case 2:
+            r= CGRectMake(0,0,tw,th);
+            break;
+    }
     
-    UIImage *sourceImage = self;
-    UIImage *newImage = nil;
-    
-    //   CGSize imageSize = sourceImage.size;
-    //   CGFloat width = imageSize.width;
-    //   CGFloat height = imageSize.height;
-    
-    CGFloat targetWidth = targetSize.width;
-    CGFloat targetHeight = targetSize.height;
-    
-    //   CGFloat scaleFactor = 0.0;
-    CGFloat scaledWidth = targetWidth;
-    CGFloat scaledHeight = targetHeight;
-    
-    CGPoint thumbnailPoint = CGPointMake(0.0,0.0);
-    
-    // this is actually the interesting part:
-    
-    UIGraphicsBeginImageContext(targetSize);
-    
-    CGRect thumbnailRect = CGRectZero;
-    thumbnailRect.origin = thumbnailPoint;
-    thumbnailRect.size.width  = scaledWidth;
-    thumbnailRect.size.height = scaledHeight;
-    
-    [sourceImage drawInRect:thumbnailRect];
-    
-    newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsBeginImageContext(r.size);
+    [self drawInRect:r];
+    UIImage *res = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    
-    if(newImage == nil) NSLog(@"could not scale image");
-    
-    
-    return newImage ;
+    return res;
 }
 
 - (UIImage *)imageRotatedByRadians:(CGFloat)radians{
@@ -513,6 +493,7 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     
 }
 
+
 - (UIImage *)imageWithCorner:(CGFloat)radius toBounds:(CGRect)bounds borderWidth:(float)borderWidth borderColor:(CGColorRef)borderColor{
     UIGraphicsBeginImageContextWithOptions(bounds.size, NO, 1.0);
     
@@ -533,13 +514,18 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
     return img;
 }
 
+
+
 - (UIImage *)imageWithBlendColor:(UIColor*)color{
+    return [self imageWithBlendColor:color mode:kCGBlendModeOverlay];
+}
+- (UIImage *)imageWithBlendColor:(UIColor*)color mode:(CGBlendMode)mode{
     @autoreleasepool {
         UIGraphicsBeginImageContextWithOptions (self.size, NO, [[UIScreen mainScreen] scale]);
         CGContextRef context = UIGraphicsGetCurrentContext();
         CGRect rect = CGRectMake(0, 0, self.size.width, self.size.height);
         [self drawInRect:rect blendMode:kCGBlendModeNormal alpha:1.0f];
-        CGContextSetBlendMode(context, kCGBlendModeOverlay);
+        CGContextSetBlendMode(context, mode);
         [color setFill];
         CGContextFillRect(context, rect);
         [self drawInRect:rect blendMode:kCGBlendModeDestinationIn alpha:1.0f];
@@ -552,7 +538,7 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
 - (UIImage*) imageWithBlendImage:(NSString*)imgname alpha:(float)alpha{
     @autoreleasepool {
         CGSize size = self.size;
-        UIImage* mask = [[UIImage imageNamed:imgname] imageByScalingProportionallyToMinimumSize:size];
+        UIImage * mask =[[UIImage imageNamed:imgname] imageByScale:size style:2];
         UIGraphicsBeginImageContext(size);
         [self drawAtPoint:CGPointZero blendMode:kCGBlendModeOverlay alpha:1.0];
         [mask drawAtPoint:CGPointZero blendMode:kCGBlendModeOverlay alpha:alpha];

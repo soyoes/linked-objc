@@ -488,7 +488,7 @@ $& $::setStyle(Styles s){
         view.transform = transf;
     
     if(ss.rotate3d){
-        Rotate3D_opt o3 = r3dopt(ss.rotate3d);
+        Rotate3DOpt o3 = r3dopt(ss.rotate3d);
         layer.anchorPoint = CGPointMake(o3.axisX, o3.axisY);
         CATransform3D rt = CATransform3DIdentity;
         rt.m34 = 1.0f / (-1*o3.resp);
@@ -728,6 +728,7 @@ $& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler on
     if(svgpath){
         set(@"orgSvgPath", str(this->svgPath?this->svgPath:SVG::pathFromStyle(styles)));
         set(@"targetSvgPath", str(svgpath));
+        this->svgPath = svgpath;
     }
     animate(ms, ^($& v, float delta) {
         Styles org = val2style(v.get(@"orgStyle"));
@@ -744,8 +745,8 @@ $& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler on
         if(tar.cornerRadius) s.cornerRadius = org.cornerRadius+(tar.cornerRadius-org.cornerRadius)*delta;
         if(tar.rotate)s.rotate = org.rotate+(tar.rotate-org.rotate)*delta;
         if(tar.rotate3d){
-            Rotate3D_opt o3d = r3dopt(org.rotate3d?org.rotate3d:"0,0,0,0,500,0.5,0.5");
-            Rotate3D_opt t3d = r3dopt(tar.rotate3d);
+            Rotate3DOpt o3d = r3dopt(org.rotate3d?org.rotate3d:"0,0,0,0,500,0.5,0.5");
+            Rotate3DOpt t3d = r3dopt(tar.rotate3d);
             s.rotate3d = r3dstr(o3d.degree+(t3d.degree-o3d.degree)*delta, t3d.x, t3d.y,
                                 o3d.resp+(t3d.resp-o3d.resp)*delta,
                                 o3d.axisX+(t3d.axisX-o3d.axisX)*delta,
@@ -759,8 +760,8 @@ $& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler on
             s.color = deltacolor(org.color, tar.color, delta);
         
         if(tar.shadow){
-            Shadow_opt osd = shadopt(org.shadow?org.shadow:"0 0 0 #00000000");
-            Shadow_opt tsd = shadopt(tar.shadow);
+            ShadowOpt osd = shadopt(org.shadow?org.shadow:"0 0 0 #00000000");
+            ShadowOpt tsd = shadopt(tar.shadow);
             const char* clr = string(osd.color).compare(string(tsd.color))==0? tsd.color:deltacolor(osd.color, tsd.color, delta);
             s.shadow = shadstr(tsd.inset, osd.x+(tsd.x-osd.x)*delta,
                                osd.y+(tsd.y-osd.y)*delta,
@@ -768,8 +769,8 @@ $& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler on
                                clr);
         }
         if(tar.border){
-            Borderline_opt ob = bordopt(org.border?org.border:"0 solid #00000000 0");
-            Borderline_opt tb = bordopt(tar.border);
+            BorderlineOpt ob = bordopt(org.border?org.border:"0 solid #00000000 0");
+            BorderlineOpt tb = bordopt(tar.border);
             const char* clr = string(ob.color).compare(string(tb.color))==0? tb.color:deltacolor(ob.color, tb.color, delta);
             s.border = bordstr(ob.w+(tb.w-ob.w)*delta, tb.style, clr, ob.radius+(tb.radius-ob.radius)*delta);
         }
@@ -850,7 +851,7 @@ $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd,
 #pragma mark $ operator
 
 __attribute__((overloadable)) $& $::operator>>($& p){
-    cout << [ID UTF8String] << " >> " << [p.ID UTF8String] << endl;
+//    cout << [ID UTF8String] << " >> " << [p.ID UTF8String] << endl;
     if(&p){
         if(subLayers){
             BOOL hasSubHandler = NO;
@@ -898,7 +899,7 @@ __attribute__((overloadable)) $& $::operator>>($& p){
     return *this;
 }
 __attribute__((overloadable)) $& $::operator>>(UIView*p){
-    cout << [ID UTF8String] << " >> UIVIEW" << endl;
+//    cout << [ID UTF8String] << " >> UIVIEW" << endl;
     //FIXME solve sublayers
     if(p){[p addSubview:view];if(src)setImage(src);}
     return *this;
@@ -938,9 +939,15 @@ id $::get(NSString* key){
     if(view){return [view.data valueForKey:key];}
     return nil;
 }
-void $::set(NSString*key, id value){
+__attribute__((overloadable)) $& $::set(NSString*key, id value){
     if(view){[view.data setValue:value forKey:key];}
+    return *this;
 }
+__attribute__((overloadable)) $& $::set(Dic * p){
+    if(view&&p){for (id k in p) {view.data[k] = p[k];}}
+    return *this;
+}
+
 void $::del(NSString*key){
     if(view){[view.data removeObjectForKey:key];}
 }
@@ -949,7 +956,7 @@ void $::del(NSString*key){
 
 void $::setBorder(const char*border){
     if(border){
-        Borderline_opt bo = bordopt(border);
+        BorderlineOpt bo = bordopt(border);
         styles.borderWidth = bo.w;
         if(bo.color) styles.borderColor = bo.color;
         if(bo.radius) styles.cornerRadius = bo.radius;
@@ -977,7 +984,7 @@ void $::setBorder(const char*border){
 void $::setShadow(const char* shadow){
     CALayer *layer = shapeLayer?shapeLayer:contentLayer;
     if(shadow){
-        Shadow_opt opt = shadopt(shadow);
+        ShadowOpt opt = shadopt(shadow);
         UIColor * cl = opt.color?str2color(opt.color):[UIColor darkGrayColor];
         view.clipsToBounds = NO;
         if(opt.inset){
@@ -1052,7 +1059,7 @@ void $::setGradient(const char* value){
 }
 
 void $::setOutline(const char * s){
-    Outline_opt op = olopt(s);
+    OutlineOpt op = olopt(s);
     styles.outlineWidth = op.w;
     styles.outlineColor = op.color;
     styles.outlineSpace = op.space;
@@ -1088,6 +1095,7 @@ void $::setOutline(const char * s){
  H V S T are unsupported
  */
 void $::setSvgPath (const char* svgpathcmd){
+    this->svgPath = svgpathcmd;
     CGPathRef path = SVG::path(svgpathcmd);
     return setSvgPath(path);
 }
@@ -1828,7 +1836,7 @@ char* r3dstr(float degree, float x, float y, int resp, float axisX, float axisY,
 /*
  string to rotate3d options
  */
-Rotate3D_opt r3dopt(const char * rotate3dStr){
+Rotate3DOpt r3dopt(const char * rotate3dStr){
     string rotate(rotate3dStr);
     //degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
     float p[] = {0,0,0,0,500,0.5,0.5,0,0,0};
@@ -1855,7 +1863,7 @@ char* shadstr(bool inset, float x, float y, float blur, const char*color){
 /*
  string to shadow options
  */
-Shadow_opt shadopt(const char*s){
+ShadowOpt shadopt(const char*s){
     if(!s)return {false, 0, 0, 0, NULL};
     string shad(s);
     
@@ -1871,8 +1879,8 @@ Shadow_opt shadopt(const char*s){
     p[i++] =shad.substr(start, shad.length() - start);
     
     return (p[0].compare("inset")==0) ?
-        (Shadow_opt){true,stof(p[1]),stof(p[2]),stof(p[3]),const_cast<char*>(p[4].c_str())} :
-        (Shadow_opt){false,stof(p[0]),stof(p[1]),stof(p[2]),const_cast<char*>(p[3].c_str())};
+        (ShadowOpt){true,stof(p[1]),stof(p[2]),stof(p[3]),const_cast<char*>(p[4].c_str())} :
+        (ShadowOpt){false,stof(p[0]),stof(p[1]),stof(p[2]),const_cast<char*>(p[3].c_str())};
     
 }
 
@@ -1886,17 +1894,17 @@ char* bordstr(float w, LineStyles style, const char*color, float radius){
 /*
  string to borderline options
  */
-Borderline_opt bordopt(const char*s){
+BorderlineOpt bordopt(const char*s){
     string border(s);
     border = regex_replace(border,regex("\\s+")," ");
     vector<string> parts = splitx(border, regex("\\s+"));
-    Borderline_opt bo = {0,"#00000000",l_solid,0};
+    BorderlineOpt bo = {0,"#00000000",l_solid,0};
     int size = parts.size();
     if(size==0)return bo;
     if(regex_match(parts[0],regex("[0-9\\.]+")))
         bo.w =stof(parts[0]);
-    else
-        cout << parts[0] << "---"<< border<< endl;
+//    else
+//        cout << parts[0] << "---"<< border<< endl;
     
     for (int i=1; i<size; i++) {
         const char * cst = parts[i].c_str();
@@ -1922,8 +1930,8 @@ char* olstr(float w, LineStyles style, const char*color, float space){
 /*
  string to outline options
  */
-Outline_opt olopt(const char*s){
-    Borderline_opt bo = bordopt(s);
+OutlineOpt olopt(const char*s){
+    BorderlineOpt bo = bordopt(s);
     return {.w=bo.w,.style=bo.style,.color=bo.color,.space=bo.radius};
 }
 

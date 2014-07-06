@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D010E64E1967CF70004341D4 /* mountain.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D010E64C1967CF70004341D4 /* mountain.jpg */; };
+		D010E64F1967CF70004341D4 /* sea.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D010E64D1967CF70004341D4 /* sea.jpg */; };
 		D05BEF3C196523140026799B /* kodaru.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D05BEF3B196523140026799B /* kodaru.jpg */; };
 		D05BEF5C1965488D0026799B /* radial.png in Resources */ = {isa = PBXBuildFile; fileRef = D05BEF571965488D0026799B /* radial.png */; };
 		D06B018B195FACF00024FD47 /* examples.mm in Sources */ = {isa = PBXBuildFile; fileRef = D06B0189195FACF00024FD47 /* examples.mm */; };
+		D09C2BDB1967F9D300C4AEAD /* people.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D09C2BDA1967F9D300C4AEAD /* people.jpg */; };
 		D0F252EF195F820D00F80552 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252EE195F820D00F80552 /* Foundation.framework */; };
 		D0F252F1195F820D00F80552 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F0195F820D00F80552 /* CoreGraphics.framework */; };
 		D0F252F3195F820D00F80552 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F2195F820D00F80552 /* UIKit.framework */; };
@@ -44,10 +47,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D010E64C1967CF70004341D4 /* mountain.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = mountain.jpg; sourceTree = "<group>"; };
+		D010E64D1967CF70004341D4 /* sea.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = sea.jpg; sourceTree = "<group>"; };
 		D05BEF3B196523140026799B /* kodaru.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = kodaru.jpg; sourceTree = "<group>"; };
 		D05BEF571965488D0026799B /* radial.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = radial.png; sourceTree = "<group>"; };
 		D06B0189195FACF00024FD47 /* examples.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = examples.mm; sourceTree = "<group>"; };
 		D06B018A195FACF00024FD47 /* examples.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = examples.h; sourceTree = "<group>"; };
+		D09C2BDA1967F9D300C4AEAD /* people.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = people.jpg; sourceTree = "<group>"; };
 		D0F252EB195F820D00F80552 /* LiberObjcExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiberObjcExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0F252EE195F820D00F80552 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D0F252F0195F820D00F80552 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -111,7 +117,10 @@
 		D06B018C195FFE840024FD47 /* images */ = {
 			isa = PBXGroup;
 			children = (
+				D09C2BDA1967F9D300C4AEAD /* people.jpg */,
 				D05BEF3B196523140026799B /* kodaru.jpg */,
+				D010E64C1967CF70004341D4 /* mountain.jpg */,
+				D010E64D1967CF70004341D4 /* sea.jpg */,
 				D05BEF571965488D0026799B /* radial.png */,
 			);
 			name = images;
@@ -293,8 +302,11 @@
 			files = (
 				D0F25307195F820D00F80552 /* Images.xcassets in Resources */,
 				D05BEF3C196523140026799B /* kodaru.jpg in Resources */,
+				D010E64E1967CF70004341D4 /* mountain.jpg in Resources */,
+				D010E64F1967CF70004341D4 /* sea.jpg in Resources */,
 				D0F252F9195F820D00F80552 /* InfoPlist.strings in Resources */,
 				D0F25302195F820D00F80552 /* Main.storyboard in Resources */,
+				D09C2BDB1967F9D300C4AEAD /* people.jpg in Resources */,
 				D05BEF5C1965488D0026799B /* radial.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
