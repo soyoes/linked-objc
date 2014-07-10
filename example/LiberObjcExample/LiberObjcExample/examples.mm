@@ -78,38 +78,36 @@ void images_example($& target){
         <<img(@"kodaru.jpg", {.x=110,.y=310,.contentMode=m_CROP_FIT,.flip="V"},&s_box)
     
         >>target;
+    
+    slide({10,410,300,80})
+        << img(@"sea.jpg",{0,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"mountain.jpg",{300,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"people.jpg",{600,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"kodaru.jpg",{900,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"sea.jpg",{1200,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"mountain.jpg",{1500,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"people.jpg",{1800,0,300,80,.contentMode=m_CROP_FIT})
+        << img(@"kodaru.jpg",{2100,0,300,80,.contentMode=m_CROP_FIT})
+        >> target;
 }
 
 //Label & text edit
 void labels_example($& target){
     NSLog(@"labels");
     float i=0;
-    
     box(&s_panel)
         //normal label
         <<label(@"Label normal", {.y=10+35*(i++)}, &s_label)
         //truncate
         <<label(@"Label truncate, Lorem ipsum dolor sit amet, consectetur adipisicing elit",
                 {.y=10+35*(i++),.nowrap=true,.truncate=true}, &s_label)
-        <<label(@"Label editable (single line)", {.y=10+35*(i++),.nowrap=true}, &s_label).setEditable(true,nil)
+        // .nowrap=true + setEditable = single line edit
+        <<label(@"Label editable (single line)", {.y=10+35*(i++),.nowrap=true}, &s_label).setEditable(true)
         <<label(@"Label with other font", {.y=10+35*(i++),.font="MarkerFelt-Thin,14",.color="#ff0000"}, &s_label)
         <<label(@"Label multiline\nThe 2nd row", {.y=10+35*(i++), .h=60}, &s_label)
-        <<(label(@"Label multiline\neditable", {.ID=@"textEdit",.y=10+35*(i++)+30, .h=120}, &s_label)
-           .setEditable(true,^($&v) {
-            $* dbtn = $::getView(@"EDIT_DONE_BTN", @"ViewController");
-            if(!dbtn){
-                $* title_row = $::getView(@"LI_0", @"ViewController");
-                //add back btn to title row
-                *title_row << label(@"Done",{.ID=@"back_btn",.x=275,.color="#3366CC"},&s_list_title_btn)
-                .bind(@"tap", ^(GR *gg, $& btn, Dic *pp) {
-                    btn.remove();
-                    $* te = $::getView(@"textEdit", @"ViewController");
-                    if(te) [te->view switchEditingMode];
-                }, @{});
-            }
-            }))
+        // .nowrap=false + setEditable = multi line edit
+        <<(label(@"Label multiline\neditable", {.ID=@"textEdit",.y=10+35*(i++)+30, .h=120}, &s_label).setEditable(true)) //
         >>target;
-
 }
 
 //Lazy loading
@@ -521,3 +519,4 @@ void svg_example($& target){
     },@{@"delay":@(len+1)}))
     >>target;
 }
+

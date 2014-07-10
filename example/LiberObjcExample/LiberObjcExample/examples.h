@@ -50,6 +50,4 @@ void animation_example3($& target);
 void svg_example($& target);
 
 
-
-
 #endif /* defined(__LiberObjcExample__examples__) */

@@ -78,13 +78,7 @@ NSMutableDictionary * __datas=nil;
             _textField.hidden = NO;
             _owner->textLayer.hidden = YES;
             [_textField becomeFirstResponder];
-            /*
-            View *root = [self root];
-            if(root){
-                [root set:@"orgContentOffset" value:[NSNumber numberWithFloat:root.contentOffset.y]];
-                [root setContentOffset:CGPointMake(0, self.frame.origin.y) animated:YES];
-                //FIXME , change self.frame.origin.y to height in root
-            }*/
+            _owner->scrollTop(10);
         }else{
             _textField.hidden = YES;
             if(_owner->textLayer.wrapped){
@@ -93,12 +87,8 @@ NSMutableDictionary * __datas=nil;
                 _owner->setText(((UITextField*)_textField).text);
             }
             [_textField resignFirstResponder];
-            /*
-            View *root = [self root];
-            if(root){
-                float orgOffset = [root get:@"orgContentOffset"]!=nil?[[root get:@"orgContentOffset"] floatValue]:0;
-                [root setContentOffset:CGPointMake(0, orgOffset) animated:YES];
-            }*/
+            
+            _owner->scrollBack();
         }
     }
 }
@@ -120,12 +110,7 @@ NSMutableDictionary * __datas=nil;
     //NSLog(@"textFieldDidEndEditing");
     _textField.hidden = YES;
     _owner->setText(((UITextField*)_textField).text);
-    /*
-    View *root = [self root];
-    if(root){
-        float orgOffset = [root get:@"orgContentOffset"]!=nil?[[root get:@"orgContentOffset"] floatValue]:0;
-        [root setContentOffset:CGPointMake(0, orgOffset) animated:YES];
-    }*/
+    _owner->scrollBack();
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField{
@@ -134,6 +119,7 @@ NSMutableDictionary * __datas=nil;
         return NO;
     }else{
         [textField resignFirstResponder];
+        
         return YES;
     }
     
@@ -154,18 +140,31 @@ NSMutableDictionary * __datas=nil;
     return (asSubLayer)? NO:
         [super containsPoint:thePoint];
 }
-/*
-- (void)layoutSublayers{
-    //cout << "resize layer" << endl;
-    for(CALayer *l in self.sublayers){
-        if(l.frame.origin.x==0 && l.frame.origin.y==0
-           && l.frame.size.width==self.bounds.size.width && l.frame.size.height==self.bounds.size.height){
-            l.frame=self.bounds;
-        }
-    }
-}*/
 
 @end
+
+#pragma mark - TextEdit
+@implementation TextView
+@synthesize inputAccessoryView;
+- (UIView *)inputAccessoryView {
+    if (!inputAccessoryView) {
+        $&b = box({0.0, 0.0, 320, 44.0, 0, "#ECF0F1"})
+            << (label(@"DONE", {250, 0, 70, 44, 1, NULL, "#0088ff", .font="AvenirNextCondensed-DemiBold,18",.paddingTop=10,.paddingLeft=14})
+            .bind(@"tap", ^(GR *g, $ & v, Dic * p) {
+                $* owner = ($*)[$getData(@"textEditViewOwner") pointerValue];
+                UITextView * tv = owner->view.textField;
+                [tv resignFirstResponder];
+                tv.hidden = YES;
+                owner->setText(tv.text);
+                $removeData(@"textEditViewOwner");
+                owner->scrollBack();
+            }, @{}));
+        inputAccessoryView = b.view;
+    }
+    return inputAccessoryView;
+}
+@end
+
 
 #pragma mark - SVG
 
@@ -344,6 +343,7 @@ __attribute__((overloadable)) $::$(const char* path):svgPath(path){}
 $::~$(){
     if(ID && !released){
         //NSLog(@"Free view : %@",ID);
+        //if(pages) pages->remove();
         nodes=nil;
         view=nil;
         src=nil;
@@ -362,6 +362,8 @@ $::~$(){
         ID=nil;
         NS=nil;
         released=true;
+        //if(pages) delete pages;
+        
     }
 }
 
@@ -517,7 +519,8 @@ $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
     NSString * className = [NSString stringWithFormat:@"UI%@GestureRecognizer",event];
     UIGestureRecognizer *gesture = [[NSClassFromString(className) alloc]
                                     initWithTarget:view action:@selector(gestureHandler:)];
-    //[mask setUserInteractionEnabled:YES];
+
+    
     [view setUserInteractionEnabled:YES];
     /*
      TODO multipleTouchEnabled
@@ -527,6 +530,14 @@ $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
         //this->set(@"gestureData", opts);
         [view.data setValue:opts forKey:@"gestureData"];
     }
+    
+    if([event isEqualToString:@"swipe"]){
+        UISwipeGestureRecognizer * gr = [[UISwipeGestureRecognizer alloc] initWithTarget:view action:@selector(gestureHandler:)];
+        [gr setDirection:(UISwipeGestureRecognizerDirectionRight)];
+        [view addGestureRecognizer:gr];
+        [(UISwipeGestureRecognizer*)gesture setDirection:(UISwipeGestureRecognizerDirectionLeft)];
+    }
+    
     [view addGestureRecognizer:gesture];
     return *this;
 }
@@ -570,6 +581,14 @@ void $::remove(){
 
 NSValue* $::value(){
     return [NSValue valueWithPointer:this];
+}
+
+$* $::root(){
+    $* root = this;
+    while (root && root->view && root->parent) {
+        root = root->parent;
+    }
+    return root;
 }
 
 #pragma mark $ animator
@@ -890,16 +909,37 @@ __attribute__((overloadable)) $& $::operator>>($& p){
                 }, parentHit);
             }
         }
+
         [p.view addSubview:view];
         if(src)setImage(src);
         parent = &p;
         if(!p.nodes)p.nodes = [[NSMutableArray alloc] init];
         [p.nodes addObject:[NSValue valueWithPointer:this]];
+        if(slidable && nodes){ // add pages
+            int cnt = [nodes count];
+            if(cnt){
+                float w = view.bounds.size.width,
+                      h = view.bounds.size.height,
+                      pw = 16, ph = 20, cw = cnt * pw;
+                if(cw<=w*0.6){ // show as dot
+                    pages = &box({(w-cw)/2.0f+view.frame.origin.x, h-ph+view.frame.origin.y, cw, ph, 1});
+                    Styles pstyle = {0,4,8,8,0,"#ffffff66",.cornerRadius=4,.shadow="0 0 1 #00000099"};
+                    for (int i = 0; i<cnt; i++)
+                        box({i*pw}, &pstyle) >> *pages;
+                    (*pages)[0]->setStyle({.bgcolor="#ffffffcc"});
+                    
+                }else{ // show as label
+                    pages = &label([NSString stringWithFormat:@"(1/%d)",cnt],
+                                   {(w-100)/2.0f+view.frame.origin.x, h-ph+view.frame.origin.y, 100, ph, 1,
+                                       .color="#ffffff", .font="HelveticaNeue-CondensedBold,12",.textAlign="center"});
+                }
+                *pages >> p;
+            }
+        }
     }
     return *this;
 }
 __attribute__((overloadable)) $& $::operator>>(UIView*p){
-//    cout << [ID UTF8String] << " >> UIVIEW" << endl;
     //FIXME solve sublayers
     if(p){[p addSubview:view];if(src)setImage(src);}
     return *this;
@@ -939,6 +979,8 @@ id $::get(NSString* key){
     if(view){return [view.data valueForKey:key];}
     return nil;
 }
+float $::getFloat(NSString*key){id r = get(key); return r? [r floatValue]:0;}
+int $::getInt(NSString*key){id r = get(key); return r? [r intValue]:0;}
 __attribute__((overloadable)) $& $::set(NSString*key, id value){
     if(view){[view.data setValue:value forKey:key];}
     return *this;
@@ -948,8 +990,17 @@ __attribute__((overloadable)) $& $::set(Dic * p){
     return *this;
 }
 
-void $::del(NSString*key){
-    if(view){[view.data removeObjectForKey:key];}
+$& $::del(id key){
+    if(view){
+        if([key isKindOfClass:[NSString class]])
+            [view.data removeObjectForKey:key];
+        else if([key isKindOfClass:[NSArray class]]){
+            for (NSString *k in (NSArray*)key) {
+                [view.data removeObjectForKey:k];
+            }
+        }
+    }
+    return *this;
 }
 
 #pragma mark $ drawing
@@ -1123,6 +1174,29 @@ $& $::setContentSize(float x, float y){
     return *this;
 }
 
+$& $::scrollTo(float x, float y){
+    if(scrollable){
+        [((UIScrollView*)view) setContentOffset:{x,y} animated:YES];
+    }else
+        NSLog(@"LiberOBJC ERROR: You can not specify make UIView scroll, use sbox instead");
+    return *this;
+}
+$& $::scrollTop(float topMargin){
+    $* ro = root();
+    if(ro != NULL)
+        ro->set(@"orgContentOffset", @(ro->view.contentOffset.y)).scrollTo(0,view.frame.origin.y-topMargin);
+    return *this;
+}
+$& $::scrollBack(){
+    $* ro = root();
+    if(ro != NULL){
+        id off = ro->get(@"orgContentOffset");
+        if(off)
+            ro->scrollTo(0,[off floatValue]).del(@"orgContentOffset");
+    }
+    return *this;
+}
+
 #pragma mark $ image
 
 $& $::setImage(id _src){
@@ -1132,9 +1206,7 @@ $& $::setImage(id _src){
     if([_src isKindOfClass:[NSString class]]){
         if([_src hasPrefix:@"http:"]||[_src hasPrefix:@"https:"]||[_src hasPrefix:@"ftp:"]){//URL
             src = _src;
-            cout << "set url" << endl;
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-                cout << "fetch url" << endl;
                 NSError* error = nil;
                 NSData* data = [NSData dataWithContentsOfURL:[NSURL URLWithString:src] options:NSDataReadingUncached error:&error];
                 if(data&&!error){
@@ -1337,7 +1409,8 @@ void $::setFontSize(float s){
     }
 }
 
-$& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
+__attribute__((overloadable)) $& $::setEditable(BOOL editable){return setEditable(editable, ^($&v){});}
+__attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
     styles.editable = editable;
     if(view.textField==nil){
         CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
@@ -1357,12 +1430,13 @@ $& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
         NSString *align = styles.textAlign?str(styles.textAlign):@"left";
         
         if(textLayer.wrapped ||!styles.nowrap){
-            UITextView* t = [[UITextView alloc] initWithFrame:rect];
+            TextView* t = [[TextView alloc] initWithFrame:rect];
             t.delegate = view;
             t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
             t.font = [UIFont fontWithName:fontName size:fontSize];
             t.editable = YES;
             view.textField = t;
+            $setData(@"textEditViewOwner",value());
         }else{
             UITextField* t = [[UITextField alloc] initWithFrame:rect];
             t.delegate = view;
@@ -1460,6 +1534,75 @@ __attribute__((overloadable)) $& sbox(Styles s,Styles *sp){return (new $(true))-
 
 __attribute__((overloadable)) $& sbox(initializer_list<Styles *>ext){return (new $(true))->setStyle({},ext);}
 __attribute__((overloadable)) $& sbox(Styles s, initializer_list<Styles *>ext){return (new $(true))->setStyle(s,ext);}
+
+__attribute__((overloadable)) $& slide(Styles s){
+    return slide(s, NULL);
+}
+__attribute__((overloadable)) $& slide(Styles s, Styles* sp){
+    $& b = sbox(s,sp);
+    b.slidable = true;
+    b.view.clipsToBounds = YES;
+    b.view.backgroundColor = [UIColor blackColor];
+    //add scroll event
+    b.bind(@"pan", ^(GR *g, $ & v, Dic *p) {
+        if(v.getInt(@"_sliding"))return;
+        CGPoint coords = [g locationInView:v.view.superview];
+        float orgX = v.getFloat(@"_slideOrgX");
+        int   lastPage = v.getInt(@"_slideLastPage");
+        float w = v.view.bounds.size.width;
+        float factor = 2.0f;
+        if(g.state == UIGestureRecognizerStateEnded){
+            float dis = orgX>coords.x?orgX-coords.x:coords.x-orgX;
+            int page = lastPage;
+            float diss;
+            AnimateStepHandler sh = ^($ & vv, float d) {
+                float start = vv.getFloat(@"_slideStart");
+                float ds = vv.getFloat(@"_slideDis");
+                vv.view.contentOffset ={start+ds*d,0};
+            };
+            AnimateFinishedHandler se =^($ & vv) {
+                float start = vv.getFloat(@"_slideStart");
+                float ds = vv.getFloat(@"_slideDis");
+                vv.view.contentOffset ={static_cast<CGFloat>((int)(start+ds)),0};
+                vv.del(@[@"_sliding",@"_slideDis",@"_slideStart",@"_slideOrgX"]);
+                int p = vv.getInt(@"_slideLastPage");
+                if(vv.pages){
+                    if(vv.pages->text){
+                        vv.pages->setText([NSString stringWithFormat:@"(%d/%d)",p+1,[vv.nodes count]]);
+                    }else{
+                        for (int i=0; i<[vv.nodes count]; i++)
+                            (*vv.pages)[i]->setStyle({.bgcolor="#ffffff66"});
+                        (*vv.pages)[p]->setStyle({.bgcolor="#ffffffcc"});
+                    }
+                }
+            };
+            
+            if(dis*factor>w/3){ //move to the next page.
+                page += orgX>coords.x? 1:-1;
+                page = MIN([v.nodes count]-1,MAX(page, 0));
+                diss =page*w-v.view.contentOffset.x;
+            }else{//move to the previous page.
+                if(!page) page = 0;
+                diss =dis*((orgX>coords.x)?-1:1)*factor;
+            }
+            
+            v.set(@"_sliding", @(1))
+             .set(@"_slideStart",@(v.view.contentOffset.x))
+             .set(@"_slideDis",@(diss))
+             .set(@"_slideLastPage", @(page))
+             .animate(300, sh, se, @{});
+            
+        }else{
+            if(!orgX){
+                v.set(@"_slideOrgX", @(coords.x));
+            }else{
+                v.view.contentOffset ={lastPage*w-(coords.x-orgX)*factor,0};
+            }
+        }
+    }, @{});
+    return b;
+}
+
 
 __attribute__((overloadable)) $& label(NSString*txt){return (new $())->setStyle({}).setText(txt);}
 __attribute__((overloadable)) $& label(NSString*txt, Styles s){return (new $())->setStyle(s).setText(txt);}
@@ -1903,8 +2046,6 @@ BorderlineOpt bordopt(const char*s){
     if(size==0)return bo;
     if(regex_match(parts[0],regex("[0-9\\.]+")))
         bo.w =stof(parts[0]);
-//    else
-//        cout << parts[0] << "---"<< border<< endl;
     
     for (int i=1; i<size; i++) {
         const char * cst = parts[i].c_str();

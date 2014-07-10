@@ -80,6 +80,8 @@ public:
     id          src;
     NSString   *text;
     bool        scrollable;
+    bool        slidable;
+    $* pages;
     
     $*              parent;
     NSMutableArray *nodes;
@@ -134,9 +136,11 @@ public:
     CGRect rect();
     
     id get(NSString*key);
+    float getFloat(NSString*key);
+    int getInt(NSString*key);
     __attribute__((overloadable)) $& set(NSString*key, id value);
     __attribute__((overloadable)) $& set(Dic*d);
-    void del(NSString*key);
+    $& del(id key);
     
     void setShadow(const char* shadow);
     void setOutline(const char* outline);
@@ -153,14 +157,19 @@ public:
     
     $& setText(NSString * _text);
     $& setDefaultText(NSString * _text);
+    $* root();
     void setTextAlign(const char* align);
     void setFont(char* font);
     __attribute__((overloadable)) void setColor(id color);
     __attribute__((overloadable)) void setColor(char* color);
     void setFontSize(float s);
     void switchEditingMode();
-    $& setEditable(BOOL editable, TextEditOnInitHandler startEdit);
+    __attribute__((overloadable)) $& setEditable(BOOL editable);
+    __attribute__((overloadable)) $& setEditable(BOOL editable, TextEditOnInitHandler startEdit);
     $& setContentSize(float x, float y);
+    $& scrollTo(float , float y);
+    $& scrollTop(float topMargin);
+    $& scrollBack();
     //void setBgcolor(id color);
     
     static NSMutableDictionary * s_views;
@@ -182,6 +191,7 @@ private:
     __attribute__((overloadable)) static void registerView($* vp);
     __attribute__((overloadable)) static void removeView($* vp);
     bool released;
+    
 };
 
 #pragma mark - View
@@ -199,6 +209,10 @@ private:
 #pragma mark - Layer
 @interface Layer : CALayer
 @property (nonatomic, readwrite) BOOL asSubLayer;
+@end
+
+#pragma mark - TextField
+@interface TextView : UITextView
 @end
 
 
@@ -219,6 +233,10 @@ __attribute__((overloadable)) $& sbox(Styles* sp);
 __attribute__((overloadable)) $& sbox(Styles s, Styles* sp);
 __attribute__((overloadable)) $& sbox(std::initializer_list<Styles *>ext);
 __attribute__((overloadable)) $& sbox(Styles s, std::initializer_list<Styles *>ext);
+
+__attribute__((overloadable)) $& slide(Styles s);
+__attribute__((overloadable)) $& slide(Styles s, Styles* sp);
+
 __attribute__((overloadable)) $& label(NSString*txt);
 __attribute__((overloadable)) $& label(NSString*txt, Styles s);
 __attribute__((overloadable)) $& label(NSString*txt, Styles* sp);
