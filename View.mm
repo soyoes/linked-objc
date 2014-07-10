@@ -8,7 +8,7 @@
 //
 
 /*
-TODO
+ TODO
  dashed
  rotate2d
  
@@ -69,6 +69,7 @@ NSMutableDictionary * __datas=nil;
 -(void) switchEditingMode{
     if(_textField!=nil){
         if(_textField.hidden){
+            $setData(@"textEditViewOwner",_owner->value());
             [self addSubview:_textField];//FIXME
             if(_owner->textLayer.wrapped){
                 ((UITextView*)_textField).text = _owner->text;
@@ -79,6 +80,7 @@ NSMutableDictionary * __datas=nil;
             _owner->textLayer.hidden = YES;
             [_textField becomeFirstResponder];
             _owner->scrollTop(10);
+
         }else{
             _textField.hidden = YES;
             if(_owner->textLayer.wrapped){
@@ -94,11 +96,11 @@ NSMutableDictionary * __datas=nil;
 }
 
 /*
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
-    [super touchesMoved:touches withEvent:event];
-    
-    [self.nextResponder touchesMoved:touches withEvent:event];
-}*/
+ - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
+ [super touchesMoved:touches withEvent:event];
+ 
+ [self.nextResponder touchesMoved:touches withEvent:event];
+ }*/
 
 + (Class) layerClass{
     return [Layer class];
@@ -138,7 +140,7 @@ NSMutableDictionary * __datas=nil;
 @synthesize asSubLayer;
 - (BOOL)containsPoint:(CGPoint)thePoint{
     return (asSubLayer)? NO:
-        [super containsPoint:thePoint];
+    [super containsPoint:thePoint];
 }
 
 @end
@@ -149,16 +151,18 @@ NSMutableDictionary * __datas=nil;
 - (UIView *)inputAccessoryView {
     if (!inputAccessoryView) {
         $&b = box({0.0, 0.0, 320, 44.0, 0, "#ECF0F1"})
-            << (label(@"DONE", {250, 0, 70, 44, 1, NULL, "#0088ff", .font="AvenirNextCondensed-DemiBold,18",.paddingTop=10,.paddingLeft=14})
+        << (label(@"DONE", {250, 0, 70, 44, 1, NULL, "#0088ff", .font="AvenirNextCondensed-DemiBold,18",.paddingTop=10,.paddingLeft=14})
             .bind(@"tap", ^(GR *g, $ & v, Dic * p) {
-                $* owner = ($*)[$getData(@"textEditViewOwner") pointerValue];
+            $* owner = ($*)[$getData(@"textEditViewOwner") pointerValue];
+            if(owner){
                 UITextView * tv = owner->view.textField;
                 [tv resignFirstResponder];
                 tv.hidden = YES;
                 owner->setText(tv.text);
                 $removeData(@"textEditViewOwner");
                 owner->scrollBack();
-            }, @{}));
+            }
+        }, @{}));
         inputAccessoryView = b.view;
     }
     return inputAccessoryView;
@@ -170,7 +174,7 @@ NSMutableDictionary * __datas=nil;
 
 vector<SVGPathCmd> SVG::str2cmds(const char* pathcmd){
     string svgpath(pathcmd);
-
+    
     svgpath = regex_replace(svgpath, regex("[\\s+,]"), " ");
     svgpath = regex_replace(svgpath, regex("([A-Z])\\s+"), "$1");
     smatch m;
@@ -248,7 +252,7 @@ vector<SVGPathCmd> SVG::tween(const char* path1, const char* path2,  float delta
         SVGPathCmd  c1=cs1.at(i),c2=cs2.at(i),c=c1;
         for (int j=0; j<6; j++) {
             float cf1 = c1.coords[j]?c1.coords[j]:0,
-                cf2 = c2.coords[j]?c2.coords[j]:0;
+            cf2 = c2.coords[j]?c2.coords[j]:0;
             if(cf1!=cf2) c.coords[j] = cf1 + (cf2-cf1)*delta;
         }
         c.cmd = c2.cmd;
@@ -268,19 +272,19 @@ const char * SVG::pathFromStyle(Styles s){
     float x1=s.x, y1=s.y, x2=s.x+s.w, y2=s.y+s.h, r=s.cornerRadius;
     NSString * ss = r>0?
     [NSString stringWithFormat:@"M%f %f L%f %f Q%f,%f %f,%f L%f %f Q%f,%f %f,%f L%f %f Q%f,%f %f,%f L%f,%f Q%f,%f %f,%f Z",
-         x1+r,  y1,     //left-up corner p2
-         x2-r,  y1,     //right-up corner p1
-         x2,    y1,     //right-up corner cp
-         x2,    y1+r,   //right-up corner p2
-         x2,    y2-r,   //right-down corner p1
-         x2,    y2,     //right-down corner cp
-         x2-r,  y2,     //right-down corner p2
-         x1+r,  y2,     //left-down corner p1
-         x1,    y2,     //left-down corner cp
-         x1,    y2-r,   //left-down corner p2
-         x1,    y1+r,   //left-up corner p1
-         x1,    y1,     //left-up corner cp
-         x1+r,  y1      //left-up corner p2 close
+     x1+r,  y1,     //left-up corner p2
+     x2-r,  y1,     //right-up corner p1
+     x2,    y1,     //right-up corner cp
+     x2,    y1+r,   //right-up corner p2
+     x2,    y2-r,   //right-down corner p1
+     x2,    y2,     //right-down corner cp
+     x2-r,  y2,     //right-down corner p2
+     x1+r,  y2,     //left-down corner p1
+     x1,    y2,     //left-down corner cp
+     x1,    y2-r,   //left-down corner p2
+     x1,    y1+r,   //left-up corner p1
+     x1,    y1,     //left-up corner cp
+     x1+r,  y1      //left-up corner p2 close
      ]:[NSString stringWithFormat:@"M%f %f L%f %f L%f %f L%f %f Z", x1,y1, x2,y1, x2,y2, x1,y2];
     return cstr(ss);
 }
@@ -335,10 +339,10 @@ map<NSString*, style_f*> style_funcs = {
 #pragma mark - $
 
 
-__attribute__((overloadable)) $::$():svgPath(nullptr){}
-__attribute__((overloadable)) $::$(id _src):src(_src),svgPath(nullptr){}
-__attribute__((overloadable)) $::$(bool scroll):scrollable(scroll),svgPath(nullptr){}
-__attribute__((overloadable)) $::$(const char* path):svgPath(path){}
+__attribute__((overloadable)) $::$():svgPath(nullptr),slidable(false),released(false){}
+__attribute__((overloadable)) $::$(id _src):src(_src),svgPath(nullptr),slidable(false),released(false){}
+__attribute__((overloadable)) $::$(bool scroll):scrollable(scroll),svgPath(nullptr),slidable(false),released(false){}
+__attribute__((overloadable)) $::$(const char* path):svgPath(path),slidable(false),released(false){}
 // Constructor
 $::~$(){
     if(ID && !released){
@@ -378,10 +382,10 @@ $* $::initView(Styles s){
     layer.zPosition = styles.z;
     
     /*
-    transLayer = [CATransformLayer layer];
-    transLayer.frame = view.bounds;
-    [layer addSublayer:transLayer];
-    */
+     transLayer = [CATransformLayer layer];
+     transLayer.frame = view.bounds;
+     [layer addSublayer:transLayer];
+     */
     
     contentLayer = [CALayer layer];
     contentLayer.frame = view.bounds;
@@ -410,7 +414,7 @@ $& $::setStyle(Styles s){
         ss.paddingRight=ss.padding;
         ss.paddingBottom=ss.padding;
     }
-
+    
     //CALayer *_layer = shapeLayer?shapeLayer:contentLayer;
     layer.opacity = (1-ss.alpha);
     
@@ -426,14 +430,14 @@ $& $::setStyle(Styles s){
     
     if(ss.bgcolor){
         if(strhas(ss.bgcolor, ":")){//gradient
-            this->setGradient(ss.bgcolor);
+            setGradient(ss.bgcolor);
         }else{
             if(shapeLayer){
                 shapeLayer.fillColor =str2color(ss.bgcolor).CGColor;
                 contentLayer.backgroundColor = [UIColor clearColor].CGColor;
             }else
                 contentLayer.backgroundColor=str2color(ss.bgcolor).CGColor;
-
+            
         }
     }
     
@@ -450,14 +454,14 @@ $& $::setStyle(Styles s){
             setShadow(shadow.c_str());
         }
     }
-
-    if(ss.border) this->setBorder(ss.border);
+    
+    if(ss.border) setBorder(ss.border);
     if(styles.cornerRadius>0) { //radius
         contentLayer.cornerRadius = styles.cornerRadius;
     }
     
     if(ss.outline){
-        this->setOutline(ss.outline);
+        setOutline(ss.outline);
     }
     
     CGAffineTransform transf;
@@ -509,7 +513,7 @@ $& $::setStyle(Styles st, initializer_list<Styles *>ext){
     for (Styles *ex  : ext) {
         style(&o,ex);
     }
-    return this->setStyle(o);
+    return setStyle(o);
 }
 $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
     if([_events indexOfObject:event]==NSNotFound || handler==NULL)
@@ -519,7 +523,7 @@ $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
     NSString * className = [NSString stringWithFormat:@"UI%@GestureRecognizer",event];
     UIGestureRecognizer *gesture = [[NSClassFromString(className) alloc]
                                     initWithTarget:view action:@selector(gestureHandler:)];
-
+    
     
     [view setUserInteractionEnabled:YES];
     /*
@@ -527,7 +531,6 @@ $& $::bind(NSString* event, GestureHandler handler, NSDictionary * opts){
      exclusiveTouch
      */
     if(opts!=nil && [[opts allKeys] count]>0){
-        //this->set(@"gestureData", opts);
         [view.data setValue:opts forKey:@"gestureData"];
     }
     
@@ -549,7 +552,7 @@ $& $::unbind(NSString* event){
 }
 
 $& $::dragable(GestureHandler onDrag, GestureHandler onEnd){
-    this->bind(@"pan",^(GR *ges,$& v, Dic *params) {
+    bind(@"pan",^(GR *ges,$& v, Dic *params) {
         UIPanGestureRecognizer * r = (UIPanGestureRecognizer *) ges;
         View *m = r.view;
         if(r.state == UIGestureRecognizerStateEnded){
@@ -584,11 +587,23 @@ NSValue* $::value(){
 }
 
 $* $::root(){
-    $* root = this;
-    while (root && root->view && root->parent) {
-        root = root->parent;
+    if(!released && ID){
+        View * v = view;
+        while (v.superview) {
+            if([v.superview isKindOfClass:[View class]]){
+                v = v.superview;
+            }else{
+                return v.owner;
+            }
+        }
     }
-    return root;
+    return nullptr;
+    /*
+    if(!released && parent!=nullptr && ID!=nil){
+        cout << "go to parent :" << ID << endl;
+        return parent->root();
+    }else return ID?this:nullptr;
+    */
 }
 
 #pragma mark $ animator
@@ -606,11 +621,11 @@ $& $::startMove(){
     for (id b in behaviors) {
         [animator addBehavior:b];
     }
- 
+    
     return *this;
 }
 
-/** 
+/**
  Gravity animation
  opt.angle  -> _.angle in degree, float 0~360
  opt.speed  -> _.magnitude 1~N float
@@ -671,9 +686,9 @@ $& $::addSnap(Dic *opt){
 /*
  set collision bounds of animation
  opts.points : float array len>=2, @[point0.x,point0.y,point1.x,point1.y...]
-                nil : use animator.target.bounds.
-                len=2 : use p1~p2 rectangle
-                len>2 : use p1~pN polygon
+ nil : use animator.target.bounds.
+ len=2 : use p1~p2 rectangle
+ len>2 : use p1~pN polygon
  opts.svg   : provide path by giving svg path cmd, e.g. "M100 100 L0 200..."
  opts.mode : (collisionMode) UICollisionBehaviorModeItems|UICollisionBehaviorModeBoundaries|UICollisionBehaviorModeEverything
  */
@@ -723,7 +738,7 @@ char* deltacolor(char* from, char* to, float delta){
 /**
  
  supported style animation
- .x, .y, .w, .h 
+ .x, .y, .w, .h
  .alpha
  .cornerRadius
  .rotate
@@ -745,9 +760,9 @@ $& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler on
     set(@"orgStyle", style2val(styles));
     set(@"targetStyle", style2val(s));
     if(svgpath){
-        set(@"orgSvgPath", str(this->svgPath?this->svgPath:SVG::pathFromStyle(styles)));
+        set(@"orgSvgPath", str(svgPath?svgPath:SVG::pathFromStyle(styles)));
         set(@"targetSvgPath", str(svgpath));
-        this->svgPath = svgpath;
+        svgPath = svgpath;
     }
     animate(ms, ^($& v, float delta) {
         Styles org = val2style(v.get(@"orgStyle"));
@@ -805,7 +820,7 @@ $& $::animate(float ms, Styles s, const char* svgpath, AnimateFinishedHandler on
             v,setStyle(s);
     }, onEnd, opts);
     return *this;
-
+    
 }
 
 $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd){return animate(ms, onStep, onEnd, @{});}
@@ -860,7 +875,7 @@ $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd,
             if(onEnd)onEnd(*o);
             return NO;
         }else return YES;
-                
+        
     }, @{@"o":[NSValue valueWithPointer:this],@"times":@(times), @"start":@(start), @"duration":@(ms), @"delta_func":delta_func_name, @"style_func":style_func, @"onStep":onStep, @"onEnd":onEnd});
     
     return *this;
@@ -870,7 +885,7 @@ $& $::animate(float ms, AnimateStepHandler onStep, AnimateFinishedHandler onEnd,
 #pragma mark $ operator
 
 __attribute__((overloadable)) $& $::operator>>($& p){
-//    cout << [ID UTF8String] << " >> " << [p.ID UTF8String] << endl;
+    //    cout << [ID UTF8String] << " >> " << [p.ID UTF8String] << endl;
     if(&p){
         if(subLayers){
             BOOL hasSubHandler = NO;
@@ -909,18 +924,18 @@ __attribute__((overloadable)) $& $::operator>>($& p){
                 }, parentHit);
             }
         }
-
+        
         [p.view addSubview:view];
         if(src)setImage(src);
         parent = &p;
         if(!p.nodes)p.nodes = [[NSMutableArray alloc] init];
         [p.nodes addObject:[NSValue valueWithPointer:this]];
-        if(slidable && nodes){ // add pages
+        if(slidable==true && nodes){ // add pages
             int cnt = [nodes count];
             if(cnt){
                 float w = view.bounds.size.width,
-                      h = view.bounds.size.height,
-                      pw = 16, ph = 20, cw = cnt * pw;
+                h = view.bounds.size.height,
+                pw = 16, ph = 20, cw = cnt * pw;
                 if(cw<=w*0.6){ // show as dot
                     pages = &box({(w-cw)/2.0f+view.frame.origin.x, h-ph+view.frame.origin.y, cw, ph, 1});
                     Styles pstyle = {0,4,8,8,0,"#ffffff66",.cornerRadius=4,.shadow="0 0 1 #00000099"};
@@ -1024,7 +1039,7 @@ void $::setBorder(const char*border){
         shapeLayer.strokeColor=str2color(styles.borderColor).CGColor;
         shapeLayer.lineWidth=styles.borderWidth;
     }
-
+    
 }
 
 
@@ -1123,9 +1138,9 @@ void $::setOutline(const char * s){
         oColor= [UIColor colorWithPatternImage:[UIImage imageNamed:cl]];
     }
     view.clipsToBounds = NO;
-        
+    
     float w = styles.outlineWidth + styles.outlineSpace;
-        
+    
     CALayer *olayer = [CALayer layer];
     olayer.frame = CGRectMake(-1*w, -1*w,
                               contentLayer.frame.size.width+2*w, contentLayer.frame.size.height+2*w);
@@ -1146,7 +1161,7 @@ void $::setOutline(const char * s){
  H V S T are unsupported
  */
 void $::setSvgPath (const char* svgpathcmd){
-    this->svgPath = svgpathcmd;
+    svgPath = svgpathcmd;
     CGPathRef path = SVG::path(svgpathcmd);
     return setSvgPath(path);
 }
@@ -1160,7 +1175,7 @@ void $::setSvgPath (CGPathRef path){
     shapeLayer.frame = CGRectMake(0, 0, contentLayer.frame.size.width,contentLayer.frame.size.height);
     shapeLayer.path = path;
     CGPathRelease(path);
-    this->setStyle(this->styles);
+    setStyle(styles);
     [contentLayer addSublayer:shapeLayer];
 }
 
@@ -1211,7 +1226,7 @@ $& $::setImage(id _src){
                 NSData* data = [NSData dataWithContentsOfURL:[NSURL URLWithString:src] options:NSDataReadingUncached error:&error];
                 if(data&&!error){
                     dispatch_sync(dispatch_get_main_queue(), ^{
-                        this->setImage([UIImage imageWithData:data]);
+                        setImage([UIImage imageWithData:data]);
                     });
                 }else{
                     NSLog(@"Failed To Load Image From URL:%@",src);
@@ -1224,10 +1239,8 @@ $& $::setImage(id _src){
                 @autoreleasepool {
                     [UIImage loadImageFromAssetURL:[NSURL URLWithString:src] handler:^(UIImage *im,NSDictionary *p) {
                         dispatch_sync(dispatch_get_main_queue(), ^{
-                            //this->setImage([UIImage imageWithData:data]);
-                            this->setImage(im);
+                            setImage(im);
                         });
-                        //this->setImage(im);
                         im = nil;
                     } params:@{}];
                 }
@@ -1308,15 +1321,15 @@ $& $::setText(NSString * _text){
     [textLayer setBackgroundColor:[UIColor clearColor].CGColor];
     
     if(styles.font)
-        this->setFont(styles.font);
+        setFont(styles.font);
     
     if(styles.fontSize>0)
-        this->setFontSize(styles.fontSize);
-
-    if(styles.color)
-        this->setColor(styles.color);
+        setFontSize(styles.fontSize);
     
-    this->setTextAlign(styles.textAlign);
+    if(styles.color)
+        setColor(styles.color);
+    
+    setTextAlign(styles.textAlign);
     
     textLayer.wrapped = !styles.nowrap;
     textLayer.truncationMode = styles.truncate ? kCATruncationEnd:kCATruncationNone;
@@ -1351,10 +1364,10 @@ void $::setFont(char* font){
     NSString *f = [NSString stringWithFormat:@"%s",font];
     if(textLayer==nil)
         textLayer= [[CATextLayer alloc] init];
-        NSDictionary *defaultStyle = @{};//FIXME : check styles.mm
-        if(defaultStyle!=nil && f==nil){
-            f = defaultStyle[@"font"];
-        }
+    NSDictionary *defaultStyle = @{};//FIXME : check styles.mm
+    if(defaultStyle!=nil && f==nil){
+        f = defaultStyle[@"font"];
+    }
     if(f!=nil && ![f isEqualToString:@"default"]){//FIXME
         float fontSize = styles.fontSize>0?styles.fontSize:14;
         if([f contains:@","]){//@"monaco,12"
@@ -1367,7 +1380,7 @@ void $::setFont(char* font){
         [textLayer setFont:(__bridge CFTypeRef)(f)];
         [textLayer setFontSize:fontSize];
     }else{
-        this->setFontSize(-1);//adjust size auto;
+        setFontSize(-1);//adjust size auto;
     }
 }
 
@@ -1413,7 +1426,9 @@ __attribute__((overloadable)) $& $::setEditable(BOOL editable){return setEditabl
 __attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
     styles.editable = editable;
     if(view.textField==nil){
-        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
+        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop,
+                                 contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight,
+                                 contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
         
         NSDictionary * orgs = @{};//FIXME : check styles.mm
         
@@ -1436,7 +1451,6 @@ __attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHan
             t.font = [UIFont fontWithName:fontName size:fontSize];
             t.editable = YES;
             view.textField = t;
-            $setData(@"textEditViewOwner",value());
         }else{
             UITextField* t = [[UITextField alloc] initWithFrame:rect];
             t.delegate = view;
@@ -1449,7 +1463,7 @@ __attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHan
         view.textField.hidden = YES;
         set(@"initHandler", (id)startHandler);
     }
-    this->bind(@"tap", ^void (UIGestureRecognizer*ges, $& o, NSDictionary*params){
+    bind(@"tap", ^void (UIGestureRecognizer*ges, $& o, NSDictionary*params){
         View *v = (View *)ges.view;
         [v switchEditingMode];
         TextEditOnInitHandler sh = o.get(@"initHandler");
@@ -1483,7 +1497,7 @@ void $::clearAll(NSString *ctrlerName){
         [s_views[ctrlerName] removeAllObjects];
     }
 }
-    
+
 void $::setControllerName(NSString *controllerName){
     s_controllerName = controllerName;
 }
@@ -1496,7 +1510,7 @@ void $::removeView($* vp){
     if(!vp || !vp->ID || !vp->NS)
         return;
     if(s_views && s_views[vp->NS])
-       [s_views[vp->NS] removeObjectForKey:(NSString*)(vp->ID)];
+        [s_views[vp->NS] removeObjectForKey:(NSString*)(vp->ID)];
 }
 
 /*
@@ -1517,7 +1531,7 @@ void $::registerView($* vp){
     //NSLog(@"Register view : %@",vp->ID);
 }
 
-    
+
 
 #pragma mark - CPP wrapper
 __attribute__((overloadable)) $& box(){return (new $())->setStyle({});}
@@ -1534,74 +1548,6 @@ __attribute__((overloadable)) $& sbox(Styles s,Styles *sp){return (new $(true))-
 
 __attribute__((overloadable)) $& sbox(initializer_list<Styles *>ext){return (new $(true))->setStyle({},ext);}
 __attribute__((overloadable)) $& sbox(Styles s, initializer_list<Styles *>ext){return (new $(true))->setStyle(s,ext);}
-
-__attribute__((overloadable)) $& slide(Styles s){
-    return slide(s, NULL);
-}
-__attribute__((overloadable)) $& slide(Styles s, Styles* sp){
-    $& b = sbox(s,sp);
-    b.slidable = true;
-    b.view.clipsToBounds = YES;
-    b.view.backgroundColor = [UIColor blackColor];
-    //add scroll event
-    b.bind(@"pan", ^(GR *g, $ & v, Dic *p) {
-        if(v.getInt(@"_sliding"))return;
-        CGPoint coords = [g locationInView:v.view.superview];
-        float orgX = v.getFloat(@"_slideOrgX");
-        int   lastPage = v.getInt(@"_slideLastPage");
-        float w = v.view.bounds.size.width;
-        float factor = 2.0f;
-        if(g.state == UIGestureRecognizerStateEnded){
-            float dis = orgX>coords.x?orgX-coords.x:coords.x-orgX;
-            int page = lastPage;
-            float diss;
-            AnimateStepHandler sh = ^($ & vv, float d) {
-                float start = vv.getFloat(@"_slideStart");
-                float ds = vv.getFloat(@"_slideDis");
-                vv.view.contentOffset ={start+ds*d,0};
-            };
-            AnimateFinishedHandler se =^($ & vv) {
-                float start = vv.getFloat(@"_slideStart");
-                float ds = vv.getFloat(@"_slideDis");
-                vv.view.contentOffset ={static_cast<CGFloat>((int)(start+ds)),0};
-                vv.del(@[@"_sliding",@"_slideDis",@"_slideStart",@"_slideOrgX"]);
-                int p = vv.getInt(@"_slideLastPage");
-                if(vv.pages){
-                    if(vv.pages->text){
-                        vv.pages->setText([NSString stringWithFormat:@"(%d/%d)",p+1,[vv.nodes count]]);
-                    }else{
-                        for (int i=0; i<[vv.nodes count]; i++)
-                            (*vv.pages)[i]->setStyle({.bgcolor="#ffffff66"});
-                        (*vv.pages)[p]->setStyle({.bgcolor="#ffffffcc"});
-                    }
-                }
-            };
-            
-            if(dis*factor>w/3){ //move to the next page.
-                page += orgX>coords.x? 1:-1;
-                page = MIN([v.nodes count]-1,MAX(page, 0));
-                diss =page*w-v.view.contentOffset.x;
-            }else{//move to the previous page.
-                if(!page) page = 0;
-                diss =dis*((orgX>coords.x)?-1:1)*factor;
-            }
-            
-            v.set(@"_sliding", @(1))
-             .set(@"_slideStart",@(v.view.contentOffset.x))
-             .set(@"_slideDis",@(diss))
-             .set(@"_slideLastPage", @(page))
-             .animate(300, sh, se, @{});
-            
-        }else{
-            if(!orgX){
-                v.set(@"_slideOrgX", @(coords.x));
-            }else{
-                v.view.contentOffset ={lastPage*w-(coords.x-orgX)*factor,0};
-            }
-        }
-    }, @{});
-    return b;
-}
 
 
 __attribute__((overloadable)) $& label(NSString*txt){return (new $())->setStyle({}).setText(txt);}
@@ -1669,6 +1615,82 @@ __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles 
         return ul;
     }
     return sbox(listStyle, ext);
+}
+
+
+__attribute__((overloadable)) $& slide(NSArray*data, ListHandler handler, Styles slideStyle){return slide(data, handler, slideStyle,{});}
+__attribute__((overloadable)) $& slide(NSArray*data, ListHandler handler, Styles slideStyle, std::initializer_list<Styles *>ext){
+   
+    //b.view.backgroundColor = [UIColor blackColor];
+    if(!data || !handler)return sbox();
+    
+    int i = 0;
+    $& b = sbox(slideStyle,ext);
+    b.slidable = true;
+    b.view.clipsToBounds = YES;
+    for (id item in data){
+        handler(item, i++) >> b;
+    }
+    
+    //add scroll event
+    b.bind(@"pan", ^(GR *g, $ & v, Dic *p) {
+        if(v.getInt(@"_sliding"))return;
+        CGPoint coords = [g locationInView:v.view.superview];
+        float orgX = v.getFloat(@"_slideOrgX");
+        int   lastPage = v.getInt(@"_slideLastPage");
+        float w = v.view.bounds.size.width;
+        float factor = 2.0f;
+        if(g.state == UIGestureRecognizerStateEnded){
+            float dis = orgX>coords.x?orgX-coords.x:coords.x-orgX;
+            int page = lastPage;
+            float diss;
+            int speed=100;
+            AnimateStepHandler sh = ^($ & vv, float d) {
+                float start = vv.getFloat(@"_slideStart");
+                float ds = vv.getFloat(@"_slideDis");
+                vv.view.contentOffset ={start+ds*d,0};
+            };
+            AnimateFinishedHandler se =^($ & vv) {
+                float start = vv.getFloat(@"_slideStart");
+                float ds = vv.getFloat(@"_slideDis");
+                vv.view.contentOffset ={static_cast<CGFloat>((int)(start+ds)),0};
+                vv.del(@[@"_sliding",@"_slideDis",@"_slideStart",@"_slideOrgX"]);
+                int p = vv.getInt(@"_slideLastPage");
+                if(vv.pages){
+                    if(vv.pages->text){
+                        vv.pages->setText([NSString stringWithFormat:@"(%d/%d)",p+1,[vv.nodes count]]);
+                    }else{
+                        for (int i=0; i<[vv.nodes count]; i++)
+                            (*vv.pages)[i]->setStyle({.bgcolor="#ffffff66"});
+                        (*vv.pages)[p]->setStyle({.bgcolor="#ffffffcc"});
+                    }
+                }
+            };
+            
+            if(dis*factor>w/4){ //move to the next page.
+                page += orgX>coords.x? 1:-1;
+                page = MIN([v.nodes count]-1,MAX(page, 0));
+                diss =page*w-v.view.contentOffset.x;
+            }else{//move to the previous page.
+                if(!page) page = 0;
+                diss =dis*((orgX>coords.x)?-1:1)*factor;
+            }
+            
+            v.set(@"_sliding", @(1))
+            .set(@"_slideStart",@(v.view.contentOffset.x))
+            .set(@"_slideDis",@(diss))
+            .set(@"_slideLastPage", @(page))
+            .animate(speed, sh, se, @{});
+            
+        }else{
+            if(!orgX){
+                v.set(@"_slideOrgX", @(coords.x));
+            }else{
+                v.view.contentOffset ={lastPage*w-(coords.x-orgX)*factor,0};
+            }
+        }
+    }, @{});
+    return b;
 }
 
 __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handler, Styles gridsStyle){
@@ -2022,8 +2044,8 @@ ShadowOpt shadopt(const char*s){
     p[i++] =shad.substr(start, shad.length() - start);
     
     return (p[0].compare("inset")==0) ?
-        (ShadowOpt){true,stof(p[1]),stof(p[2]),stof(p[3]),const_cast<char*>(p[4].c_str())} :
-        (ShadowOpt){false,stof(p[0]),stof(p[1]),stof(p[2]),const_cast<char*>(p[3].c_str())};
+    (ShadowOpt){true,stof(p[1]),stof(p[2]),stof(p[3]),const_cast<char*>(p[4].c_str())} :
+    (ShadowOpt){false,stof(p[0]),stof(p[1]),stof(p[2]),const_cast<char*>(p[3].c_str())};
     
 }
 
@@ -2107,7 +2129,7 @@ void $setInterval(float millisec, TimeIntervalHandler block, NSDictionary*dic){
     id vp =block;
     if(!__counters[vp])
         __counters[vp]=@0;
-
+    
     dispatch_time_t span = dispatch_time(DISPATCH_TIME_NOW, millisec*0.001f * NSEC_PER_SEC);
     dispatch_after(span, dispatch_get_main_queue(), ^(void){
         int counter = [__counters[vp] intValue];

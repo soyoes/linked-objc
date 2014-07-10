@@ -234,9 +234,6 @@ __attribute__((overloadable)) $& sbox(Styles s, Styles* sp);
 __attribute__((overloadable)) $& sbox(std::initializer_list<Styles *>ext);
 __attribute__((overloadable)) $& sbox(Styles s, std::initializer_list<Styles *>ext);
 
-__attribute__((overloadable)) $& slide(Styles s);
-__attribute__((overloadable)) $& slide(Styles s, Styles* sp);
-
 __attribute__((overloadable)) $& label(NSString*txt);
 __attribute__((overloadable)) $& label(NSString*txt, Styles s);
 __attribute__((overloadable)) $& label(NSString*txt, Styles* sp);
@@ -270,6 +267,11 @@ __attribute__((overloadable)) $& svgp(NSString* cmds, Styles s, std::initializer
 typedef $&(^ListHandler)(id, int);
 __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles listStyle);
 __attribute__((overloadable)) $& list(NSArray*data, ListHandler handler, Styles listStyle, std::initializer_list<Styles *>ext);
+
+
+__attribute__((overloadable)) $& slide(NSArray*data, ListHandler handler, Styles slideStyle);
+__attribute__((overloadable)) $& slide(NSArray*data, ListHandler handler, Styles slideStyle, std::initializer_list<Styles *>ext);
+
 typedef $&(^GridHandler)(id, int, int);
 __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handler, Styles gridsStyle);
 __attribute__((overloadable)) $& grids(NSArray*data, int cols, GridHandler handler, Styles gridsStyle, std::initializer_list<Styles *>ext);

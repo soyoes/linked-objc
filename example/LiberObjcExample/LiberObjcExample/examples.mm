@@ -79,15 +79,12 @@ void images_example($& target){
     
         >>target;
     
-    slide({10,410,300,80})
-        << img(@"sea.jpg",{0,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"mountain.jpg",{300,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"people.jpg",{600,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"kodaru.jpg",{900,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"sea.jpg",{1200,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"mountain.jpg",{1500,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"people.jpg",{1800,0,300,80,.contentMode=m_CROP_FIT})
-        << img(@"kodaru.jpg",{2100,0,300,80,.contentMode=m_CROP_FIT})
+    slide(@[@"sea.jpg",@"mountain.jpg",@"people.jpg",@"kodaru.jpg",
+            @"sea.jpg",@"mountain.jpg",@"people.jpg",@"kodaru.jpg"],
+          ^$& (id item, int i) {
+              return img(item,{300.0f*i,0,300,80,.contentMode=m_CROP_FIT});
+          },
+          {10,410,300,80})
         >> target;
 }
 
@@ -95,7 +92,7 @@ void images_example($& target){
 void labels_example($& target){
     NSLog(@"labels");
     float i=0;
-    box(&s_panel)
+    $& b = box(&s_panel)
         //normal label
         <<label(@"Label normal", {.y=10+35*(i++)}, &s_label)
         //truncate
