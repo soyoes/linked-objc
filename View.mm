@@ -71,67 +71,78 @@ NSMutableDictionary * __datas=nil;
         if(_textField.hidden){
             $setData(@"textEditViewOwner",_owner->value());
             [self addSubview:_textField];//FIXME
-            if(_owner->textLayer.wrapped){
-                ((UITextView*)_textField).text = _owner->text;
-            }else{
-                ((UITextField*)_textField).text = _owner->text;
-            }
+            ((TextView*)_textField).text = _owner->text;
             _textField.hidden = NO;
             _owner->textLayer.hidden = YES;
             [_textField becomeFirstResponder];
             _owner->scrollTop(10);
-
         }else{
             _textField.hidden = YES;
-            if(_owner->textLayer.wrapped){
-                _owner->setText(((UITextView*)_textField).text);
-            }else{
-                _owner->setText(((UITextField*)_textField).text);
-            }
+            _owner->setText(((TextView*)_textField).text);
             [_textField resignFirstResponder];
-            
             _owner->scrollBack();
         }
     }
 }
 
-/*
- - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
- [super touchesMoved:touches withEvent:event];
- 
- [self.nextResponder touchesMoved:touches withEvent:event];
- }*/
 
 + (Class) layerClass{
     return [Layer class];
 }
 
-#pragma mark delegate of textField
-// may be called if forced even if shouldEndEditing returns NO (e.g. view removed from window) or endEditing:YES called
-- (void)textFieldDidEndEditing:(UITextField *)textField{
-    //NSLog(@"textFieldDidEndEditing");
-    _textField.hidden = YES;
-    _owner->setText(((UITextField*)_textField).text);
-    _owner->scrollBack();
+- (void)datePicked{
+    UIDatePicker * picker = ((TextView*) _textField).datePicker;
+    NSString * format = _owner->get(@"_dateFormat");
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:format];
+    [formatter setTimeZone:[NSTimeZone systemTimeZone]];
+    //_owner->setText([formatter stringFromDate:picker.date]);
+    ((TextView*) _textField).text = [formatter stringFromDate:picker.date];
 }
 
-- (BOOL)textFieldShouldReturn:(UITextField *)textField{
-    if(_owner->textLayer.wrapped){
-        ((UITextField*)_textField).text = [NSString stringWithFormat:@"%@\r\n",((UITextField*)_textField).text ];
-        return NO;
-    }else{
-        [textField resignFirstResponder];
-        
-        return YES;
-    }
-    
-}
 
 #pragma mark delegate of textView
 
 -(BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if ([text isEqualToString:@"\n"]) {
+        if(!((TextView*)_textField).nowrap){
+            ((UITextView*)_textField).text = [NSString stringWithFormat:@"%@\r\n",((UITextView*)_textField).text ];
+            return YES;
+        }else{
+            [_textField resignFirstResponder];
+            _textField.hidden = YES;
+            _owner->setText(((UITextView*)_textField).text);
+            _owner->scrollBack();
+            return NO;
+        }
+    }
     return YES;
 }
+
+
+#pragma mark delegate of uipickerviewdelegate
+
+- (void)pickerView:(UIPickerView *)pV didSelectRow:(NSInteger)row inComponent:(NSInteger)component{
+    _textField.text = _textField.options[row];
+    _owner->setText(_textField.text);
+    [_textField.picker resignFirstResponder];
+    [_textField resignFirstResponder];
+    _textField.hidden = YES;
+    _owner->scrollBack();
+}
+
+- (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView{
+    return 1;
+}
+
+- (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component{
+    return  _textField.options?[_textField.options count]:0;
+}
+
+- (NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component{
+    return _textField.options?_textField.options[row]:@"";
+}
+
 
 @end
 
@@ -145,20 +156,35 @@ NSMutableDictionary * __datas=nil;
 
 @end
 
+
+
 #pragma mark - TextEdit
+
 @implementation TextView
-@synthesize inputAccessoryView;
+@synthesize inputView,inputAccessoryView,datePicker,picker,dateFormat,nowrap;
+- (UIView *)inputView {
+    return datePicker?datePicker:(picker?picker:inputView);
+}
 - (UIView *)inputAccessoryView {
-    if (!inputAccessoryView) {
+    if (!inputAccessoryView && !picker && (datePicker || !nowrap)) {
         $&b = box({0.0, 0.0, 320, 44.0, 0, "#ECF0F1"})
         << (label(@"DONE", {250, 0, 70, 44, 1, NULL, "#0088ff", .font="AvenirNextCondensed-DemiBold,18",.paddingTop=10,.paddingLeft=14})
             .bind(@"tap", ^(GR *g, $ & v, Dic * p) {
             $* owner = ($*)[$getData(@"textEditViewOwner") pointerValue];
             if(owner){
-                UITextView * tv = owner->view.textField;
+                TextView * tv = owner->view.textField;
+                NSString *value = tv.text;
+                if(datePicker){
+                    NSString * format = owner->get(@"_dateFormat");
+                    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+                    [formatter setDateFormat:format];
+                    [formatter setTimeZone:[NSTimeZone systemTimeZone]];
+                    value = [formatter stringFromDate:datePicker.date];
+                    [datePicker resignFirstResponder];
+                }
                 [tv resignFirstResponder];
                 tv.hidden = YES;
-                owner->setText(tv.text);
+                owner->setText(value);
                 $removeData(@"textEditViewOwner");
                 owner->scrollBack();
             }
@@ -354,7 +380,6 @@ $::~$(){
         text=nil;
         
         layer=nil;
-        transLayer=nil;
         contentLayer=nil;
         textLayer=nil;
         shapeLayer=nil;
@@ -380,16 +405,9 @@ $* $::initView(Styles s){
     }
     layer = view.layer;
     layer.zPosition = styles.z;
-    
-    /*
-     transLayer = [CATransformLayer layer];
-     transLayer.frame = view.bounds;
-     [layer addSublayer:transLayer];
-     */
-    
+
     contentLayer = [CALayer layer];
     contentLayer.frame = view.bounds;
-    //[transLayer addSublayer:contentLayer];
     [layer addSublayer:contentLayer];
     
     if(styles.ID)ID = styles.ID;
@@ -1361,28 +1379,32 @@ void $::setTextAlign(const char* align){
 }
 
 void $::setFont(char* font){
-    NSString *f = [NSString stringWithFormat:@"%s",font];
+    FontRef fo =ftopt(font);
     if(textLayer==nil)
         textLayer= [[CATextLayer alloc] init];
-    NSDictionary *defaultStyle = @{};//FIXME : check styles.mm
-    if(defaultStyle!=nil && f==nil){
-        f = defaultStyle[@"font"];
-    }
-    if(f!=nil && ![f isEqualToString:@"default"]){//FIXME
-        float fontSize = styles.fontSize>0?styles.fontSize:14;
-        if([f contains:@","]){//@"monaco,12"
-            NSArray *fs = [f componentsSeparatedByString:@","];
-            f = (NSString*)fs[0];
-            NSString *fsize = [(NSString*)fs[1] stringByReplacingOccurrencesOfString:@" " withString:@""];
-            fontSize = [fsize floatValue];
-        }
-        styles.fontName = cstr(f);
-        [textLayer setFont:(__bridge CFTypeRef)(f)];
-        [textLayer setFontSize:fontSize];
-    }else{
+    styles.fontName = fo.name;
+    [textLayer setFont:(__bridge CFStringRef)str(fo.name)];
+    [textLayer setFontSize:fo.size];
+    if(fo.size<=0)
         setFontSize(-1);//adjust size auto;
+    else
+        [textLayer setFontSize:fo.size];
+}
+
+
+void $::setFontSize(float s){
+    if(textLayer==nil)
+        textLayer= [[CATextLayer alloc] init];
+    if(s>0)
+        [textLayer setFontSize:s];
+    else{
+        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
+        NSString *fontName = styles.fontName? str(styles.fontName):@"Helvetica";
+        float fontSize = ![text isEqual:[NSNull null]] ? [text sizeToFit:rect.size font:fontName] : 14;
+        [textLayer setFontSize:fontSize];
     }
 }
+
 
 
 __attribute__((overloadable)) void $::setColor(id color){
@@ -1408,58 +1430,69 @@ __attribute__((overloadable)) void $::setColor(char* color){
     }
 }
 
-
-void $::setFontSize(float s){
-    if(textLayer==nil)
-        textLayer= [[CATextLayer alloc] init];
-    if(s>0)
-        [textLayer setFontSize:s];
-    else{
-        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop, contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight, contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
-        NSString *fontName = styles.fontName? str(styles.fontName):@"Helvetica";
-        int fontSize = ![text isEqual:[NSNull null]] ? [text sizeToFit:rect.size font:fontName] : 14;
-        [textLayer setFontSize:fontSize];
+__attribute__((overloadable)) $& $::setPickable(Arr* opts){
+    if(!text){
+        NSLog(@"ERR: setPickable requires label()");
+        return *this;
     }
+    setEditable(true);
+    UIPickerView * pv = [[UIPickerView alloc] init];
+    pv.delegate = view;
+    view.textField.picker = pv;
+    view.textField.options = opts;
+    //pv.showsSelectionIndicator = YES;
+    return *this;
+}
+__attribute__((overloadable)) $& $::setPickable(NSDate *date, const char* labelFormat){
+    if(!text){
+        NSLog(@"ERR: setPickable requires label()");
+        return *this;
+    }
+    setEditable(true);
+
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    NSString * format =str(labelFormat);
+    [formatter setDateFormat:format];
+    [formatter setTimeZone:[NSTimeZone systemTimeZone]];
+    NSString * val = [formatter stringFromDate:date?date:[NSDate date]];
+    set(@"_dateFormat", format);
+    setText(val);
+
+    UIDatePicker * picker = [[UIDatePicker alloc]init];
+    UIDatePickerMode mode = UIDatePickerModeDate;
+    
+    if([format contains:@"ss"]||[format contains:@"mm"]||[format contains:@"HH"]||[format contains:@"hh"]){
+        mode = ([format contains:@"yy"]||[format contains:@"MM"]||[format contains:@"dd"])
+        ? UIDatePickerModeDateAndTime : UIDatePickerModeTime;
+    }
+    [picker setDatePickerMode:mode];
+    ((TextView *) view.textField).datePicker = picker;
+    [picker addTarget:view action:@selector(datePicked) forControlEvents:UIControlEventValueChanged];
+    return *this;
 }
 
 __attribute__((overloadable)) $& $::setEditable(BOOL editable){return setEditable(editable, ^($&v){});}
 __attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
     styles.editable = editable;
     if(view.textField==nil){
+        
         CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop,
                                  contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight,
                                  contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
-        
-        NSDictionary * orgs = @{};//FIXME : check styles.mm
-        
-        NSString *fontName = //_opts[@"fontName"]!=nil? _opts[@"fontName"]:@"Helvetica";
-        styles.fontName!=NULL ? str(styles.fontName):@"Helvetica";
-        
-        float fontSize =// _opts[@"fontSize"]?[_opts[@"fontSize"] floatValue]:
-        styles.fontSize>0 ? styles.fontSize:
-        (orgs!=nil && orgs[@"fontSize"]!=nil? [orgs[@"fontSize"] floatValue]:14);
-        
+
         const NSArray * aligns = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) ?
         @[@"left",@"center",@"right", @"justified", @"natrual"]:@[@"left",@"right",@"center", @"justified", @"natrual"];
-        //NSString *align = _opts[@"textAlign"]!=nil?_opts[@"textAlign"]:@"left";
         NSString *align = styles.textAlign?str(styles.textAlign):@"left";
         
-        if(textLayer.wrapped ||!styles.nowrap){
-            TextView* t = [[TextView alloc] initWithFrame:rect];
-            t.delegate = view;
-            t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
-            t.font = [UIFont fontWithName:fontName size:fontSize];
-            t.editable = YES;
-            view.textField = t;
-        }else{
-            UITextField* t = [[UITextField alloc] initWithFrame:rect];
-            t.delegate = view;
-            if(styles.placeHolder!=nil)
-                t.placeholder = str(styles.placeHolder);
-            t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
-            t.font = [UIFont fontWithName:fontName size:fontSize];
-            view.textField = t;
-        }
+        TextView* t = [[TextView alloc] initWithFrame:rect];
+        t.delegate = view;
+        t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
+        FontRef fo=ftopt(styles.font);
+        t.font = [UIFont fontWithName:str(fo.name) size:fo.size];
+        t.editable = YES;
+        t.nowrap = styles.nowrap;
+        view.textField = t;
+
         view.textField.hidden = YES;
         set(@"initHandler", (id)startHandler);
     }
@@ -2098,6 +2131,24 @@ OutlineOpt olopt(const char*s){
     return {.w=bo.w,.style=bo.style,.color=bo.color,.space=bo.radius};
 }
 
+char* fontstr(const char*fname, float fontsize){
+    return cstr([NSString stringWithFormat:@"%@,%f",str(fname),fontsize]);
+}
+/*
+ font
+ */
+FontRef ftopt(const char*s){
+    string fstr(s);
+    fstr = regex_replace(fstr, regex("\\s+"), "");
+    int idx=(int)fstr.find(',', 0);
+    const char* fn  = idx? fstr.substr(0, idx).c_str():cstr([UIFont systemFontOfSize:14].fontName);
+    float size = idx? stof(fstr.substr(idx+1, fstr.length() - idx)) : 14;
+    int flen = idx? idx+1:[UIFont systemFontOfSize:14].fontName.length;
+    char fname[sizeof(fn)];
+    strcpy(fname,fn);
+    //cout << fname << endl;
+    return {fname, size};
+}
 
 
 //milliseconds

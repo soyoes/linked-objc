@@ -63,7 +63,6 @@ public:
     NSString    * NS;               //namespace.
     
     Layer     * layer;            //base layer
-    CATransformLayer * transLayer;  //container layer to perform 3d transfrom
     
     CALayer      * contentLayer;    //visible layer, contains bg color and other styles.
     
@@ -164,6 +163,10 @@ public:
     __attribute__((overloadable)) void setColor(char* color);
     void setFontSize(float s);
     void switchEditingMode();
+    
+    __attribute__((overloadable)) $& setPickable(Arr* opts);
+    __attribute__((overloadable)) $& setPickable(NSDate *date, const char* labelFormat);
+    
     __attribute__((overloadable)) $& setEditable(BOOL editable);
     __attribute__((overloadable)) $& setEditable(BOOL editable, TextEditOnInitHandler startEdit);
     $& setContentSize(float x, float y);
@@ -194,12 +197,25 @@ private:
     
 };
 
-#pragma mark - View
 
-@interface View : UIScrollView<UITextFieldDelegate,UITextViewDelegate>
+#pragma mark - TextField
+/*
+ @interface TextEdit : UITextField
+ @end
+ */
+@interface TextView : UITextView
+@property (nonatomic,retain) NSString * dateFormat;
+@property (nonatomic,retain) NSArray * options;
+@property (nonatomic,retain) UIDatePicker *datePicker;
+@property (nonatomic,retain) UIPickerView *picker;
+@property BOOL nowrap;
+@end
+
+#pragma mark - View
+@interface View : UIScrollView<UITextViewDelegate,UIPickerViewDelegate>
 @property (nonatomic,retain) NSMutableDictionary * gestures;
 @property (nonatomic,retain) NSMutableDictionary * data;
-@property (nonatomic,retain) UIView *textField;
+@property (nonatomic,retain) TextView *textField;
 @property $* owner;
 -(id)   initWithOwner:($*)owner rect:(CGRect)rect;
 -(void) gestureHandler:(UIGestureRecognizer*)ges;
@@ -210,11 +226,6 @@ private:
 @interface Layer : CALayer
 @property (nonatomic, readwrite) BOOL asSubLayer;
 @end
-
-#pragma mark - TextField
-@interface TextView : UITextView
-@end
-
 
 #pragma mark - CPP wrapper
 
@@ -321,6 +332,11 @@ BorderlineOpt bordopt(const char*s);
 //styles : outline
 char* olstr(float w, LineStyles style, const char*color, float space);
 OutlineOpt olopt(const char*s);
+
+//styles : font
+char* fontstr(const char*fname, float fontsize);
+FontRef ftopt(const char*s);
+
 
 
 //time

@@ -10,6 +10,7 @@
 #include "style_sheet.h"
 #include <iostream>
 
+
 //Shapes with styles
 void boxes_example($& target){
     NSLog(@"boxes");
@@ -101,7 +102,13 @@ void labels_example($& target){
         // .nowrap=true + setEditable = single line edit
         <<label(@"Label editable (single line)", {.y=10+35*(i++),.nowrap=true}, &s_label).setEditable(true)
         <<label(@"Label with other font", {.y=10+35*(i++),.font="MarkerFelt-Thin,14",.color="#ff0000"}, &s_label)
+    
+        <<(label(@"Date Picker", {.y=10+35*(i++),.nowrap=true}, &s_label).setPickable([NSDate date], "yyyy-MM-dd"))
+    
+        <<(label(@"Picker", {.y=10+35*(i++)}, &s_label).setPickable(@[@"one",@"two",@"three",@"four",@"five"]))
+    
         <<label(@"Label multiline\nThe 2nd row", {.y=10+35*(i++), .h=60}, &s_label)
+    
         // .nowrap=false + setEditable = multi line edit
         <<(label(@"Label multiline\neditable", {.ID=@"textEdit",.y=10+35*(i++)+30, .h=120}, &s_label).setEditable(true)) //
         >>target;
