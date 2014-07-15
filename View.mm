@@ -1475,17 +1475,15 @@ __attribute__((overloadable)) $& $::setEditable(BOOL editable){return setEditabl
 __attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHandler startHandler){
     styles.editable = editable;
     if(view.textField==nil){
-        
-        CGRect rect = CGRectMake(styles.paddingLeft, styles.paddingTop,
-                                 contentLayer.bounds.size.width-styles.paddingLeft-styles.paddingRight,
-                                 contentLayer.bounds.size.height-styles.paddingTop-styles.paddingBottom);
 
         const NSArray * aligns = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) ?
         @[@"left",@"center",@"right", @"justified", @"natrual"]:@[@"left",@"right",@"center", @"justified", @"natrual"];
         NSString *align = styles.textAlign?str(styles.textAlign):@"left";
         
-        TextView* t = [[TextView alloc] initWithFrame:rect];
+        TextView* t = [[TextView alloc] initWithFrame:textLayer.frame];
         t.delegate = view;
+        t.textContainer.lineFragmentPadding = 0;
+        t.textContainerInset = UIEdgeInsetsZero;
         t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
         FontRef fo=ftopt(styles.font);
         t.font = [UIFont fontWithName:str(fo.name) size:fo.size];
@@ -2138,6 +2136,9 @@ char* fontstr(const char*fname, float fontsize){
  font
  */
 FontRef ftopt(const char*s){
+    if(!s || sizeof(s)==0){
+        return {cstr([UIFont systemFontOfSize:14].fontName),14};
+    }
     string fstr(s);
     fstr = regex_replace(fstr, regex("\\s+"), "");
     int idx=(int)fstr.find(',', 0);
