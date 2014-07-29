@@ -955,7 +955,7 @@ __attribute__((overloadable)) $& $::operator>>($& p){
                 h = view.bounds.size.height,
                 pw = 16, ph = 20, cw = cnt * pw;
                 if(cw<=w*0.6){ // show as dot
-                    pages = &box({(w-cw)/2.0f+view.frame.origin.x, h-ph+view.frame.origin.y, cw, ph, 1});
+                    pages = &box({static_cast<float>((w-cw)/2.0f+view.frame.origin.x), static_cast<float>(h-ph+view.frame.origin.y), cw, ph, 1});
                     Styles pstyle = {0,4,8,8,0,"#ffffff66",.cornerRadius=4,.shadow="0 0 1 #00000099"};
                     for (int i = 0; i<cnt; i++)
                         box({i*pw}, &pstyle) >> *pages;
@@ -963,7 +963,7 @@ __attribute__((overloadable)) $& $::operator>>($& p){
                     
                 }else{ // show as label
                     pages = &label([NSString stringWithFormat:@"(1/%d)",cnt],
-                                   {(w-100)/2.0f+view.frame.origin.x, h-ph+view.frame.origin.y, 100, ph, 1,
+                                   {static_cast<float>((w-100)/2.0f+view.frame.origin.x), static_cast<float>(h-ph+view.frame.origin.y), 100, ph, 1,
                                        .color="#ffffff", .font="HelveticaNeue-CondensedBold,12",.textAlign="center"});
                 }
                 *pages >> p;
@@ -1233,7 +1233,7 @@ $& $::scrollBack(){
 #pragma mark $ image
 
 $& $::setImage(id _src){
-    if(!_src || ([_src isKindOfClass:[NSString class]]&&[_src length]==0))
+    if(!ID||!_src || ([_src isKindOfClass:[NSString class]]&&[_src length]==0))
         return *this;//much init with img()
     UIImage* img;
     if([_src isKindOfClass:[NSString class]]){
@@ -1247,7 +1247,7 @@ $& $::setImage(id _src){
                         setImage([UIImage imageWithData:data]);
                     });
                 }else{
-                    NSLog(@"Failed To Load Image From URL:%@",src);
+                    //NSLog(@"Failed To Load Image From URL:%@",src);
                 }
                 src = nil;
             });
@@ -1379,16 +1379,27 @@ void $::setTextAlign(const char* align){
 }
 
 void $::setFont(char* font){
-    FontRef fo =ftopt(font);
     if(textLayer==nil)
         textLayer= [[CATextLayer alloc] init];
+    UIFont *f = ftopt(font);
+    styles.font = font;
+    styles.fontName = cstr([[str(font) componentsSeparatedByString:@","] objectAtIndex:0]);
+    [textLayer setFont:CGFontCreateWithFontName((CFStringRef)f.fontName)];
+    [textLayer setFontSize:f.pointSize];
+    
+    /*
+    FontOpt fo =ftopt(font);
+    NSString *fn = [NSString stringWithCString:fo.name encoding:NSASCIIStringEncoding];
+    //NSLog(@"%s; %@,%f", font, fn, fo.size);
     styles.fontName = fo.name;
-    [textLayer setFont:(__bridge CFStringRef)str(fo.name)];
-    [textLayer setFontSize:fo.size];
-    if(fo.size<=0)
+    [textLayer setFont:(__bridge CFStringRef)fn];
+    //[textLayer setFontSize:fo.size];
+    float fsize = fo.size;
+    if(fsize<=0)
         setFontSize(-1);//adjust size auto;
     else
-        [textLayer setFontSize:fo.size];
+        [textLayer setFontSize:fsize];
+    */
 }
 
 
@@ -1485,8 +1496,7 @@ __attribute__((overloadable)) $& $::setEditable(BOOL editable, TextEditOnInitHan
         t.textContainer.lineFragmentPadding = 0;
         t.textContainerInset = UIEdgeInsetsZero;
         t.textAlignment = (NSTextAlignment)[aligns indexOfObject:align];
-        FontRef fo=ftopt(styles.font);
-        t.font = [UIFont fontWithName:str(fo.name) size:fo.size];
+        t.font = ftopt(styles.font);
         t.editable = YES;
         t.nowrap = styles.nowrap;
         view.textField = t;
@@ -2135,20 +2145,26 @@ char* fontstr(const char*fname, float fontsize){
 /*
  font
  */
-FontRef ftopt(const char*s){
+UIFont* ftopt(const char*s){
     if(!s || sizeof(s)==0){
-        return {cstr([UIFont systemFontOfSize:14].fontName),14};
+        return [UIFont systemFontOfSize:14];
     }
     string fstr(s);
     fstr = regex_replace(fstr, regex("\\s+"), "");
     int idx=(int)fstr.find(',', 0);
     const char* fn  = idx? fstr.substr(0, idx).c_str():cstr([UIFont systemFontOfSize:14].fontName);
-    float size = idx? stof(fstr.substr(idx+1, fstr.length() - idx)) : 14;
-    int flen = idx? idx+1:[UIFont systemFontOfSize:14].fontName.length;
-    char fname[sizeof(fn)];
-    strcpy(fname,fn);
-    //cout << fname << endl;
-    return {fname, size};
+    float fsize  = idx? stof(fstr.substr(idx+1, fstr.length() - idx - 1)) : 14;
+    return [UIFont fontWithName:str(fn) size:fsize];
+    /*
+    //fstr.substr(idx+1, fstr.length() - idx);
+    cout << sizeof(int*) << "  " << fstr.length() << "  " << idx << " -- " << fsize << endl;
+    if(sizeof(int*)==4){
+        char fname[sizeof(fn)];
+        strcpy(fname,fn);
+        return {.name=fname,.size =fsize};
+    }else{
+        return {.name=const_cast<char*>(fn),.size=fsize};
+    }*/
 }
 
 

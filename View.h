@@ -335,7 +335,7 @@ OutlineOpt olopt(const char*s);
 
 //styles : font
 char* fontstr(const char*fname, float fontsize);
-FontRef ftopt(const char*s);
+UIFont* ftopt(const char*s);
 
 
 

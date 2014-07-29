@@ -111,11 +111,6 @@ typedef struct{
 }BorderlineOpt;
 
 typedef struct{
-    char* name;
-    float size;
-}FontRef;
-
-typedef struct{
     float   x;  //left
     float   y;  //top
     float   w;  //width
