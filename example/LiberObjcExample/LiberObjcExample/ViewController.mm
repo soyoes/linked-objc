@@ -48,7 +48,7 @@ void list_item_tapped(UIView * target, int i){
     }, @{});
     
     //add a panel to the screen
-    $& panel = sbox({0,568,320,548,1,"#465866"}) >> target;
+    $& panel = sbox({0,568,320,548,1,"#465866",.ID=@"panel"}) >> target;
     
     //add transition animation
     panel.addGravity(@{@"angle":@270, @"speed":@8})     //add gravity to top with power of 8*gravity.

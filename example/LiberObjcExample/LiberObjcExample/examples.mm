@@ -24,24 +24,25 @@ void boxes_example($& target){
     
     
         //shadow
-        <<box({.x=10,.y=110,.shadow="2 2 3 #000000"},&s_box)
+        <<box({.x=10,.y=110,.bgcolor="#33CCFF",.shadow="2 2 3 #000000"},&s_box)
         //inner shadow
         <<box({.x=110,.y=110,.shadow="inset 2 2 3 #000000"},&s_box)
         //gradient with positions and degree
         <<box({.x=210,.y=110,.bgcolor="#00FFFF:0 #FF0000:0.5 #FFFF00:1 90"},&s_box)
 
-    
+        // BUG
         //border + shadow
         <<box({.x=10,.y=210,.border="4 #FF9933",.shadow="0 0 5 #000000"},&s_box)
+        // BUG
         //corner radius with border
-        <<box({.x=110,.y=210,.cornerRadius=10,.border="1 #ff3399 15"},&s_box)
+        <<box({.x=110,.y=210,.cornerRadius=10,.border="1 #ff3399 15",.shadow="3 3 3 #333333"},&s_box)
         //corner radius
         <<box({.x=210,.y=210,.cornerRadius=10,.shadow="1 1 3 #333333"},&s_box)
     
         //outline
-        <<box({.x=10,.y=310,.outline="1 #ff3399 5"},&s_box)
+        //<<box({.x=10,.y=310,.outline="1 #ff3399 5"},&s_box)
         //svg path triangle
-        <<svgp(@"M 40 0 L80 80 L0 80 Z", {.x=110,.y=310,.bgcolor="#0000FF"},&s_box)
+        <<svgp(@"M 40 0 L80 80 L0 80 Z", {.x=110,.y=310,.bgcolor="#0000FF",.shadow="inset 1 1 3 #000000"},&s_box)
         //svg path fan & shadow
         <<svgp(@"M 40 0 L80 60 Q40 80 0 60 Z", {.x=210,.y=310,.bgcolor="#00FF00",.shadow="0 0 2 #333333"},&s_box)
     
@@ -55,16 +56,16 @@ void images_example($& target){
         //aspect ratio fit
         <<img(@"kodaru.jpg", {.x=10,.y=10,.contentMode=m_FIT},&s_box)
         //crop and fit the rect size
-        <<img(@"kodaru.jpg", {.x=110,.y=10,.contentMode=m_CROP_FIT},&s_box)
+        <<img(@"kodaru.jpg", {.x=110,.y=10,.contentMode=m_CROP_FIT,.shadow="3 3 3 #000000ff"},&s_box)
         //aspect ratio fill
         <<img(@"kodaru.jpg", {.x=210,.y=10,.contentMode=m_FILL},&s_box)
     
         //show center with original size
         <<img(@"kodaru.jpg", {.x=10,.y=110,.contentMode=m_ORG},&s_box)
         //img with round corner
-        <<img(@"kodaru.jpg", {.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40},&s_box)
+        <<img(@"kodaru.jpg", {.ID=@"OT",.x=110,.y=110,.contentMode=m_CROP_FIT,.cornerRadius=40,.shadow="inset 3 3 3 #000000"},&s_box)
         //svg path fan with image background
-        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110},&s_box).setImage(@"kodaru.jpg")
+        <<svgp(@"M40 0 L80 80 L0 80 Z", {.x=210,.y=110,.shadow="3 3 3 #000000ff"},&s_box).setImage(@"kodaru.jpg")
     
         //rotate 3d
         <<img(@"kodaru.jpg", {.x=10,.y=210,.contentMode=m_CROP_FIT,.rotate3d="45,1,0,0,200,0.5,1"},&s_box)
@@ -212,7 +213,12 @@ void manipulate_example($& target){
         //btn 2
         <<(label(@"Hide RED box", {.y=100+35*(i++)}, &s_label)
            .bind(@"tap", ^(GR *, $& v, Dic *) {
-            $::getView(@"RED", @"ViewController")->setStyle({.alpha=100});
+            $& ta = $::getView(@"RED");
+            if(ta.ID)
+                ta.setStyle({.alpha=100});
+                //NSLog(@"target tar.id=%@",ta.ID);
+            //v.setStyle({.alpha=100});
+            //NSLog(@"target id=%@",v.ID);
         }, @{}))
     
         //btn 3

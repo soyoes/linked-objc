@@ -13,6 +13,8 @@
 		D05BEF5C1965488D0026799B /* radial.png in Resources */ = {isa = PBXBuildFile; fileRef = D05BEF571965488D0026799B /* radial.png */; };
 		D06B018B195FACF00024FD47 /* examples.mm in Sources */ = {isa = PBXBuildFile; fileRef = D06B0189195FACF00024FD47 /* examples.mm */; };
 		D09C2BDB1967F9D300C4AEAD /* people.jpg in Resources */ = {isa = PBXBuildFile; fileRef = D09C2BDA1967F9D300C4AEAD /* people.jpg */; };
+		D0C1CF8C198DED1000F669DF /* Styles.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0C1CF8B198DED1000F669DF /* Styles.mm */; };
+		D0C1CF8F198E02E000F669DF /* Lang.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0C1CF8D198E02E000F669DF /* Lang.mm */; };
 		D0F252EF195F820D00F80552 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252EE195F820D00F80552 /* Foundation.framework */; };
 		D0F252F1195F820D00F80552 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F0195F820D00F80552 /* CoreGraphics.framework */; };
 		D0F252F3195F820D00F80552 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F252F2195F820D00F80552 /* UIKit.framework */; };
@@ -54,6 +56,10 @@
 		D06B0189195FACF00024FD47 /* examples.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = examples.mm; sourceTree = "<group>"; };
 		D06B018A195FACF00024FD47 /* examples.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = examples.h; sourceTree = "<group>"; };
 		D09C2BDA1967F9D300C4AEAD /* people.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = people.jpg; sourceTree = "<group>"; };
+		D0C1CF8B198DED1000F669DF /* Styles.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Styles.mm; path = ../../Styles.mm; sourceTree = SOURCE_ROOT; };
+		D0C1CF8D198E02E000F669DF /* Lang.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Lang.mm; sourceTree = "<group>"; };
+		D0C1CF8E198E02E000F669DF /* Lang.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Lang.h; sourceTree = "<group>"; };
+		D0C1CF90198E09C500F669DF /* Liber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Liber.h; sourceTree = "<group>"; };
 		D0F252EB195F820D00F80552 /* LiberObjcExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiberObjcExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0F252EE195F820D00F80552 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D0F252F0195F820D00F80552 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -76,13 +82,13 @@
 		D0F25323195F830700F80552 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		D0F25325195F832A00F80552 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		D0F25327195F833100F80552 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
-		D0F2532A195F83D500F80552 /* Categories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Categories.h; path = ../../../Categories.h; sourceTree = "<group>"; };
-		D0F2532B195F83D500F80552 /* Categories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Categories.m; path = ../../../Categories.m; sourceTree = "<group>"; };
-		D0F2532C195F83D500F80552 /* HTTPRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPRequest.h; path = ../../../HTTPRequest.h; sourceTree = "<group>"; };
-		D0F2532D195F83D500F80552 /* HTTPRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = HTTPRequest.m; path = ../../../HTTPRequest.m; sourceTree = "<group>"; };
-		D0F2532E195F83D500F80552 /* Styles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Styles.h; path = ../../../Styles.h; sourceTree = "<group>"; };
-		D0F2532F195F83D500F80552 /* View.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = View.h; path = ../../../View.h; sourceTree = "<group>"; };
-		D0F25330195F83D500F80552 /* View.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = View.mm; path = ../../../View.mm; sourceTree = "<group>"; };
+		D0F2532A195F83D500F80552 /* Categories.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Categories.h; path = ../../Categories.h; sourceTree = SOURCE_ROOT; };
+		D0F2532B195F83D500F80552 /* Categories.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Categories.m; path = ../../Categories.m; sourceTree = SOURCE_ROOT; };
+		D0F2532C195F83D500F80552 /* HTTPRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPRequest.h; path = ../../HTTPRequest.h; sourceTree = SOURCE_ROOT; };
+		D0F2532D195F83D500F80552 /* HTTPRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = HTTPRequest.m; path = ../../HTTPRequest.m; sourceTree = SOURCE_ROOT; };
+		D0F2532E195F83D500F80552 /* Styles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Styles.h; path = ../../Styles.h; sourceTree = SOURCE_ROOT; };
+		D0F2532F195F83D500F80552 /* View.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = View.h; path = ../../View.h; sourceTree = SOURCE_ROOT; };
+		D0F25330195F83D500F80552 /* View.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = View.mm; path = ../../View.mm; sourceTree = SOURCE_ROOT; };
 		D0F25335195F846800F80552 /* style_sheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = style_sheet.mm; sourceTree = "<group>"; };
 		D0F25336195F846800F80552 /* style_sheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = style_sheet.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -217,11 +223,15 @@
 				D0F2532C195F83D500F80552 /* HTTPRequest.h */,
 				D0F2532D195F83D500F80552 /* HTTPRequest.m */,
 				D0F2532E195F83D500F80552 /* Styles.h */,
+				D0C1CF8B198DED1000F669DF /* Styles.mm */,
 				D0F2532F195F83D500F80552 /* View.h */,
 				D0F25330195F83D500F80552 /* View.mm */,
+				D0C1CF8E198E02E000F669DF /* Lang.h */,
+				D0C1CF8D198E02E000F669DF /* Lang.mm */,
+				D0C1CF90198E09C500F669DF /* Liber.h */,
 			);
 			name = liberobjc;
-			path = LiberObjcExample;
+			path = ../..;
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
@@ -271,6 +281,9 @@
 				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = "Liberhood ltd.";
 				TargetAttributes = {
+					D0F252EA195F820D00F80552 = {
+						DevelopmentTeam = 492AXEK23E;
+					};
 					D0F2530B195F820D00F80552 = {
 						TestTargetID = D0F252EA195F820D00F80552;
 					};
@@ -334,6 +347,8 @@
 				D0F252FF195F820D00F80552 /* AppDelegate.m in Sources */,
 				D0F25332195F83D500F80552 /* HTTPRequest.m in Sources */,
 				D0F252FB195F820D00F80552 /* main.m in Sources */,
+				D0C1CF8C198DED1000F669DF /* Styles.mm in Sources */,
+				D0C1CF8F198E02E000F669DF /* Lang.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -460,10 +475,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Song Yu (VVEVMH5YSW)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LiberObjcExample/LiberObjcExample-Prefix.pch";
 				INFOPLIST_FILE = "LiberObjcExample/LiberObjcExample-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "7753C8E1-0953-43CC-8933-BCA63545EDC7";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -473,10 +492,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Song Yu (VVEVMH5YSW)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LiberObjcExample/LiberObjcExample-Prefix.pch";
 				INFOPLIST_FILE = "LiberObjcExample/LiberObjcExample-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "7753C8E1-0953-43CC-8933-BCA63545EDC7";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

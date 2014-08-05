@@ -17,6 +17,9 @@
     typedef NSMutableString MStr;
 #endif
 
+#import "Lang.h"
+#import <initializer_list>
+
 #ifndef STYLES_H
 #define STYLES_H
 
@@ -32,6 +35,15 @@
 #define m_FIT 1
 #define m_CROP_FIT 2
 #define m_ORG 3
+
+#define m_NOBORDER 0
+#define m_SOLID 1
+#define m_DASHED 2
+#define m_DOTTED 3
+
+#define m_filpN 0
+#define m_filpH 1
+#define m_filpV 2
 
 typedef enum {
     s_easeIn,
@@ -49,27 +61,21 @@ typedef enum {
     d_back,
     d_elastic,
 } AnimationDelta;
-
+/*
 typedef enum{
     l_solid,
     l_dashed,
     l_dotted
 } LineStyles;
+*/
 
-typedef struct{
+struct animete_opt{
     AnimationDelta delta;
     AnimationStyle style;
     int delay;
-}animete_opt;
+};
 
-typedef struct{
-    float r;
-    float g;
-    float b;
-    float a;
-}RGBA;
-
-typedef struct{
+struct Rotate3DOpt{
     float degree;
     float x;
     float y;
@@ -80,74 +86,91 @@ typedef struct{
     float transX;
     float transY;
     float transZ;
-}Rotate3DOpt;
+};
 
-typedef struct{
+/*
+struct ShadowOpt{
     bool  inset;
     float x;
     float y;
     float radius;
-    char* color;
-}ShadowOpt;
+    __unsafe_unretained const char* color;
+};
 
-typedef struct{
+struct LineOpt{
     float w;
-    char* color;
-    LineStyles style;
-}LineOpt;
-
-typedef struct{
+    __unsafe_unretained const char* color;
+    int style;
+};
+/*
+class OutlineOpt{
+public:
     float w;
-    char* color;
-    LineStyles style;
+    const char* color;
+    int style;
     float space;
-}OutlineOpt;
+};
 
-typedef struct{
+
+struct BorderlineOpt{
     float w;
-    char* color;
-    LineStyles style;
+    __unsafe_unretained const char* color;
+    int style;
     float radius;
-}BorderlineOpt;
+};
+ */
 
-typedef struct{
+@interface BorderDef : NSObject
+@property (nonatomic) float width, radius;
+@property (nonatomic) RGBA color;
+@property (nonatomic, retain) UIImage* image;
+@property (nonatomic) int type;
++ (BorderDef *) border:(const char* )bd;
++ (BorderDef *) border:(float)w type:(int)t color:(const char* )c radius:(float)r;
+- (const char *) toString;
+@end
+
+@interface ShadowDef : NSObject
+@property (nonatomic) BOOL inset;
+@property (nonatomic) float x, y, radius;
+@property (nonatomic) RGBA color;
++ (ShadowDef *) shadow:(const char* )sd;
++ (ShadowDef *) shadow:(bool)inset x:(float)x y:(float)y radius:(float)r color:(const char* )c;
+- (const char *) toString;
+@end
+
+
+struct Styles{
     float   x;  //left
     float   y;  //top
     float   w;  //width
     float   h;  //height
     float   z;  //z-index
-    char *  bgcolor;
+    const char *  bgcolor;
     //format(use rgbcolor) : 213,204,222,1.0
     //format(use rgbcolor) : 213,204,222
     //format(use hexcolor) : #336699CC //CC=alpha
     //format(use gradient) : #336699 #33CCFF
     //format(use gradient + location) : #336699:0 #3399CC:0.5 #33CCFF:1
     //format(use gradient + location + degree) : #336699:0 #3399CC:0.5 #33CCFF:1 90
-    char *  color;
+    const char *  color;
     //color: text color
     //color format @see bgcolor,
-    char *  shadow;
+    const char *  shadow;
     //format : x y radius colorStr opacity
-    char *  border;
+    const char *  border;
             //format :width color/image corner-radius
             //format(use image) : 1 myline.png 4        //dash|dot ...
             //format(use rgbcolor) : 1 213,204,222
             //format(use hexcolor) : 1 #CCFF33 2
-    char *  outline;
-            //format: width space color ...  1 1 #333333
     float   alpha;
             //0~1   0.0f:opacity=1, 1.0f:opacity=0
-    
-    float   borderWidth;
-    char *  borderColor;
-    LineStyles borderStyle;
     float   cornerRadius;
             //@see border
     
-    char *  outlineColor;
-    float   outlineSpace,
-            outlineWidth;
-    LineStyles outlineStyle;
+    //const char *  outlineColor;
+    //float   outlineSpace,outlineWidth;
+    //LineStyles outlineStyle;
             //@see outline
     
     int     contentMode;//m_FIT/m_FILL/m_CROP
@@ -156,22 +179,20 @@ typedef struct{
     float   rotate;
             //formart : degree in float
             //example : 30,45,60 ...
-
-    char *  rotate3d;
+    const char*  rotate3d;
             //format : degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
             //example : 45,1,0,0,500,0.5,1
-
-    char*   flip;
+    const char*   flip;
             //flip 'H'=horizontal, 'V'=vertical
     
     float   padding, paddingLeft, paddingTop, paddingRight, paddingBottom;
             //working with label(text,...) only
-    char *  font;
+    const char*  font;
             //format : fontname,fontsize
-    char *  fontName;
+    const char*  fontName;
     float   fontSize;
             //float
-    char *  textAlign;
+    const char*  textAlign;
             //justified | center | left | right
     bool    nowrap;
             // wrapped:  wrap text to multiple row , default=true
@@ -181,15 +202,58 @@ typedef struct{
             //format : true
     bool    editable;
             //format : true, if clicked, add dynamical textfield automatically
-    
-    
-    char *  placeHolder;
+    const char* placeHolder;
             //=css placeholder
-    NSString * ID;
+    const char* path;
+            //svg path
+    __strong NSString * ID;
+};
 
-}Styles;
 
+@interface StyleDef : NSObject
+@property (nonatomic, assign) float x,y,w,h,z,alpha,corner,scaleX,scaleY,rotate,
+paddingLeft, paddingTop, paddingRight, paddingBottom;
+//@property (nonatomic, assign) RGBA bgcolor, color;
+@property (nonatomic, retain) NSMutableArray * shadows, * borders, *grads;
+@property (nonatomic, assign) int contentMode;
+//@property (nonatomic, assign) Rotate3DOpt rotate3d;
+@property (nonatomic, assign) int flip;
+@property (nonatomic, retain) UIFont * font;
+@property (nonatomic) BOOL nowrap,truncate,editable;
+@property (nonatomic, retain) NSString *ID,*placeHolder,*align,*bgcolor,*color,*rotate3d,*path;
++(StyleDef*)style:(Styles)s;
+//-(void)setStyles:(Styles)s;
+-(void)mergeStyle:(StyleDef*)s;
+-(StyleDef *)duplicate;
+-(void)setBorderStyle:(const char*)s;
+-(void)setShadowStyle:(const char*)s;
+-(void)setAlignStyle:(const char*)s;
+-(void)setFlipStyle:(const char*)s;
+-(void)setFontStyle:(const char*)s;
 
+@end
 
+#define nos (Styles){0,0,0,0,0,NULL,NULL,NULL,NULL,0,0,0,1,1,0,NULL,NULL,0,0,0,0,0,NULL,NULL,0,NULL,false,false,false,NULL}
+#define dfs (Styles){0,0,0,0,0,"#FFFFFF00","#333333",NULL,NULL,0,0,m_FIT,1,1,0,NULL,NULL,0,0,0,0,0,NULL,NULL,14,"center",false,false,false,NULL}
+
+#define nor3d (Rotate3DOpt){0,0,0,0}
+#define no_3d_rotate(o) (return o.degree==0&&o.x==0&&o.y==0&&o.z==0;)
+
+//styles
+Styles str2style(const char * s);
+__attribute__((overloadable)) Styles style(Styles *custom, Styles *ext);
+__attribute__((overloadable)) Styles style(Styles *custom, std::initializer_list<Styles *>exts);
+NSValue * style2val(Styles s);
+Styles val2style(NSValue *v);
+
+#pragma mark - CPP style funcs
+
+//styles : rotate 3d opts
+char* r3dstr(float degree, float x, float y, int resp, float axisX, float axisY, float transX, float transY);
+Rotate3DOpt r3dopt(const char * rotate3dStr);
+
+//styles : font
+char* fontstr(const char*fname, float fontsize);
+UIFont* ftopt(const char*s);
 
 #endif
