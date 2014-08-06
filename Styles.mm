@@ -473,7 +473,7 @@ UIFont* ftopt(const char*s){
     string fstr(s);
     fstr = regex_replace(fstr, regex("\\s+"), "");
     int idx=(int)fstr.find(',', 0);
-    const char* fn  = idx? fstr.substr(0, idx).c_str():cstr([UIFont systemFontOfSize:14].fontName);
+    NSString *fname  = idx? str(fstr.substr(0, idx).c_str()):[UIFont systemFontOfSize:14].fontName;
     float fsize  = idx? stof(fstr.substr(idx+1, fstr.length() - idx - 1)) : 14;
-    return [UIFont fontWithName:str(fn) size:fsize];
+    return [UIFont fontWithName:fname size:fsize];
 }
