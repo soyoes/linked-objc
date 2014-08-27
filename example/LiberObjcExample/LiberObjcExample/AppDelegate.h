@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "liber.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIViewController <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 

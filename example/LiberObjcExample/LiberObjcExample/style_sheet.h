@@ -6,21 +6,21 @@
 //  Copyright (c) 2014 Liberhood ltd. All rights reserved.
 //
 
-#include "Styles.h"
+#include "liber.h"
 
 #ifndef __LiberObjcExample__style_sheet__
 #define __LiberObjcExample__style_sheet__
 
 
-extern Styles s_list;
-extern Styles s_list_row;
-extern Styles s_list_title;
-extern Styles s_list_title_btn;
+extern style_t s_list;
+extern style_t s_list_row;
+extern style_t s_list_title;
+extern style_t s_list_title_btn;
 
-extern Styles s_panel;
-extern Styles s_box;
-extern Styles s_label;
-extern Styles s_layer;
+extern style_t s_panel;
+extern style_t s_box;
+extern style_t s_label;
+extern style_t s_layer;
 
 
 #endif /* defined(__LiberObjcExample__style_sheet__) */

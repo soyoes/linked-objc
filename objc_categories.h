@@ -1,16 +1,22 @@
 //
+//  objc_categories.h
+//  LiberObjcExample
+//
+//  Created by soyoes on 8/17/14.
+//  Copyright (c) 2014 Liberhood ltd. All rights reserved.
+//
+
+//
 //  Categories.h
 //  liberobjc
 //
 //  Created by @soyoes on 10/30/12.
-//  Copyright (c) 2012 Liberhood ltd. All rights reserved.
+//  Copyright (c) 2014 Liberhood,.Ltd All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
-#ifndef liberobjc_Categories_h
-#define liberobjc_Categories_h
 
 @interface NSArray (liber)
 - (double) sum:(NSString *)key;
@@ -49,6 +55,7 @@
 - (NSArray *) lines;
 - (float) sizeToFit:(CGSize)size font:(NSString*)fontName;
 - (id)toJSON;
+- (int) indexOf:(NSString *)text;
 @end
 
 
@@ -97,5 +104,3 @@
 
 
 
-
-#endif

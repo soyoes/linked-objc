@@ -1,9 +1,14 @@
-@import ImageIO;
-@import OpenGLES;
-@import Accelerate;
+
+#import "objc_categories.h"
+//@import ImageIO;
+//@import OpenGLES;
+//@import Accelerate;
+#import <ImageIO/ImageIO.h>
+#import <OpenGLES/EAGL.h>
+#import <Accelerate/Accelerate.h>
 #import <float.h>
 
-#import "Categories.h"
+
 
 #pragma mark - NSArray
 
@@ -215,6 +220,14 @@
     return fsize;
 };
 
+- (int) indexOf:(NSString *)text {
+    NSRange range = [self rangeOfString:text];
+    if ( range.length > 0 ) {
+        return range.location;
+    } else {
+        return -1;
+    }
+}
 
 @end
 
@@ -572,7 +585,7 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
         UInt8* data = (UInt8*)CGBitmapContextGetData(ctx);
         int r, g, b;
         int numComponents = 4;
-        int bytesInContext = CGBitmapContextGetHeight(ctx) * CGBitmapContextGetBytesPerRow(ctx);
+        int bytesInContext = (int)CGBitmapContextGetHeight(ctx) * (int)CGBitmapContextGetBytesPerRow(ctx);
         for (int i = 0; i < bytesInContext; i += numComponents) {
             r = MIN(255,MAX(0,(((float)data[i]/255.0f-0.5)*contrast+0.5)*255));
             g = MIN(255,MAX(0,(((float)data[i+1]/255.0f-0.5)*contrast+0.5)*255));
@@ -705,7 +718,7 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
 - (UIImage *)applyTintEffectWithColor:(UIColor *)tintColor{
     const CGFloat EffectColorAlpha = 0.6;
     UIColor *effectColor = tintColor;
-    int componentCount = CGColorGetNumberOfComponents(tintColor.CGColor);
+    int componentCount = (int) CGColorGetNumberOfComponents(tintColor.CGColor);
     if (componentCount == 2) {
         CGFloat b;
         if ([tintColor getWhite:&b alpha:NULL]) {
@@ -781,9 +794,9 @@ CGFloat RadiansToDegrees(CGFloat radians) {return radians * 180/M_PI;};
             if (radius % 2 != 1) {
                 radius += 1; // force radius to be odd so that the three box-blur methodology works.
             }
-            vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
-            vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
-            vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, radius, radius, 0, kvImageEdgeExtend);
+            vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, (u_int32_t) radius, (u_int32_t)radius, 0, kvImageEdgeExtend);
+            vImageBoxConvolve_ARGB8888(&effectOutBuffer, &effectInBuffer, NULL, 0, 0, (u_int32_t)radius, (u_int32_t)radius, 0, kvImageEdgeExtend);
+            vImageBoxConvolve_ARGB8888(&effectInBuffer, &effectOutBuffer, NULL, 0, 0, (u_int32_t)radius, (u_int32_t)radius, 0, kvImageEdgeExtend);
         }
         BOOL effectImageBuffersAreSwapped = NO;
         if (hasSaturationChange) {

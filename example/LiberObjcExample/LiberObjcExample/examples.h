@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Liberhood ltd. All rights reserved.
 //
 
-#import "Liber.h"
+#import "liber.h"
 
 #ifndef __LiberObjcExample__examples__
 #define __LiberObjcExample__examples__

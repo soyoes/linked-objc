@@ -13,14 +13,5 @@
 #ifdef __OBJC__
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
-
-    #import "Categories.h"
-    typedef UIGestureRecognizer GR;
-    typedef NSDictionary Dic;
-    typedef NSMutableDictionary MDic;
-    typedef NSArray Arr;
-    typedef NSMutableArray MArr;
-    typedef NSString Str;
-    typedef NSMutableString MStr;
 #endif
 
