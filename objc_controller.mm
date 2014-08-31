@@ -137,13 +137,9 @@ void controller_t::clearAll(){
     if(__nodes && cname && __nodes[cname]){
         for (str_t va in __nodes[cname]) {
             view_t v = __nodes[cname][va];
-            delete(v.owner);
+            v.owner->remove();
+            //delete(v.owner); // This cause memory leak.
         }
         [__nodes[cname] removeAllObjects];
     }
 }
-/*
-void controller_t::setControllerName(NSString *controllerName){
-    lastCtlName = getControllerName();
-    $::setControllerName(controllerName);
-}*/

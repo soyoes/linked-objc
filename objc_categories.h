@@ -30,6 +30,7 @@
 //- (BOOL) same;
 - (double) sum:(NSString *)key;
 - (NSMutableArray*) initWithFill:(int)length value:(id)value rows:(int)rows;
+- (void) addStringKeyValue:(NSString*)key value:(id)value separator:(NSString*)separator;
 @end
 
 
@@ -56,6 +57,8 @@
 - (float) sizeToFit:(CGSize)size font:(NSString*)fontName;
 - (id)toJSON;
 - (int) indexOf:(NSString *)text;
+- (BOOL) isInt;
+- (BOOL) isFloat;
 @end
 
 

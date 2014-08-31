@@ -130,7 +130,7 @@ typedef void(^TextEditOnInitHandler)($&);
 @property (nonatomic,retain) mdic_t     data;
 @property (nonatomic,retain) textview_t textField;
 
-@property (nonatomic,retain) value_t  styles;           //style specifications
+@property (nonatomic,retain) str_t  styles;           //style specifications
 @property (nonatomic,retain) str_t    ID;               //unique id of this View.
 @property (nonatomic,readonly) int    idx;
 @property (nonatomic,retain) str_t    NS;               //namespace.

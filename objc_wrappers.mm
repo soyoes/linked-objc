@@ -194,6 +194,11 @@ int str2i(str_t s){
 float str2f(str_t s){
     return s?[s floatValue]:0;
 }
+num_t str2numf(str_t s) {
+    if ([s isInt])   return [NSNumber numberWithFloat: [s integerValue]];
+    else if ([s isFloat]) return [NSNumber numberWithFloat: [s floatValue]];
+    return nil;
+}
 int str_idx(str_t s, str_t t){
     return [s indexOf:t];
 }
@@ -245,7 +250,7 @@ color_t rgba2color(rgba_t c){
     return [UIColor colorWithRed:c.r green:c.g blue:c.b alpha:c.a];
 }
 str_t rgba2str(rgba_t rgba){
-    return sprintf(@"#%@%@%@%@",dec2hex(rgba.r,2),dec2hex(rgba.r,2),dec2hex(rgba.r,2),dec2hex(rgba.r,2));
+    return sprintf(@"#%@%@%@%@",dec2hex(rgba.r*255,2),dec2hex(rgba.g*255,2),dec2hex(rgba.b*255,2),dec2hex(rgba.a*255,2));
 }
 rgba_t str2rgba(str_t hex){
     color_t cl = [hex colorValue];
@@ -648,6 +653,7 @@ $& slide(arr_t data,
     v.slideWithPages = withPages;
     v.clipsToBounds = YES;
     v.slides = marr(nil);
+    //std::array<$&, 5> slides;
     for (obj_t item in data){
         $& pg = handler(item, i++);
         pg >> b;
@@ -700,7 +706,7 @@ $& slide(arr_t data,
                         [vv.pages setText:sprintf(@"(%d/%d)",p+1,(int)[vv.nodes count])];
                     }else{
                         for (int i=0; i<[vv.nodes count]; i++)
-                            (vv.pages.owner)[i].setStyle({.bgcolor=@"#ffffff66"});
+                            (*vv.pages.owner)[i]->setStyle({.bgcolor=@"#ffffff66"});
                         (*vv.pages.owner)[p]->setStyle({.bgcolor=@"#ffffffcc"});
                     }
                 }
@@ -732,6 +738,8 @@ $& slide(arr_t data,
                 if(vert){
                     int pa = n.getInt(@"_slideLastPage");
                     view_t pv = v.slides[pa];
+//                    view_t pv;
+//                    decode(v.slides[pa], &pv);
                     if(pv){//FIXME  && pv.scrollable
                         n.set(@"_slideOrgContentY", @(pv.contentOffset.y));
                     }

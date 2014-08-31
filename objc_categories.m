@@ -72,6 +72,10 @@
     return [arr same];
 }
 
+- (void) addStringKeyValue:(NSString*)key value:(id)value separator:(NSString*)separator {
+    [self addObject:[NSString stringWithFormat:@"%@%@%@", key, separator, value]];
+}
+
 @end
 
 #pragma mark - NSDictionary
@@ -228,6 +232,32 @@
         return -1;
     }
 }
+
+- (BOOL) isInt {
+    integer_t val; NSScanner* scan = [NSScanner scannerWithString:self];
+    return [scan scanInteger:&val] && [scan isAtEnd];
+}
+//- (BOOL) isInteger {
+//    NSInteger * val; NSScanner* scan = [NSScanner scannerWithString:self];
+//    return [scan scanInteger:&val] && [scan isAtEnd];
+//}
+//- (BOOL) isLongLong {
+//    long long* val; NSScanner* scan = [NSScanner scannerWithString:self];
+//    return [scan scanLongLong:&val] && [scan isAtEnd];
+//}
+- (BOOL) isFloat {
+    float val; NSScanner* scan = [NSScanner scannerWithString:self];
+    return [scan scanFloat:&val] && [scan isAtEnd];
+}
+//- (BOOL) isDouble {
+//    double val; NSScanner* scan = [NSScanner scannerWithString:self];
+//    return [scan scanDouble:&val] && [scan isAtEnd];
+//}
+//- (BOOL) isDecimal {
+//    NSDecimal * val; NSScanner* scan = [NSScanner scannerWithString:self];
+//    return [scan scanDecimal:&val] && [scan isAtEnd];
+//}
+
 
 @end
 

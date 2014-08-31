@@ -299,6 +299,7 @@ view_t $::view(){
 }
 
 value_t $::encode(){
-    return [NSValue value:this withObjCType:@encode($)];
+    //return [NSValue value:this withObjCType:@encode($)];
+    return [NSValue valueWithPointer:this];
 }
 

@@ -13,8 +13,100 @@ mdic_t __nodes, __idxmap;
 
 using namespace std;
 
-value_t style_t::encode(){
-    return [NSValue value:this withObjCType:@encode(style_t)];
+style_t style_t::clone() {
+    return style_t::decode(this->encode());
+}
+
+str_t style_t::encode(){
+    //return [NSValue value:this withObjCType:@encode(style_t)];
+    return style_t::encode(*this);
+}
+str_t style_t::encode(style_t s){
+    NSString* delimiter_k_v  = @"\a";
+    NSString* delimiter_data = @"\b";
+    
+    NSMutableArray *arr = [NSMutableArray arrayWithCapacity:20];
+    [arr addStringKeyValue:@"x" value:s.x separator:delimiter_k_v];
+    [arr addStringKeyValue:@"y" value:s.y separator:delimiter_k_v];
+    [arr addStringKeyValue:@"w" value:s.w separator:delimiter_k_v];
+    [arr addStringKeyValue:@"h" value:s.h separator:delimiter_k_v];
+    [arr addStringKeyValue:@"z" value:s.z separator:delimiter_k_v];
+    [arr addStringKeyValue:@"bgcolor"         value:s.bgcolor         separator:delimiter_k_v];
+    [arr addStringKeyValue:@"color"           value:s.color           separator:delimiter_k_v];
+    [arr addStringKeyValue:@"shadow"          value:s.shadow          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"border"          value:s.border          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"alpha"           value:s.alpha           separator:delimiter_k_v];
+    [arr addStringKeyValue:@"corner"          value:s.corner          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"contentMode"     value:s.contentMode     separator:delimiter_k_v];
+    [arr addStringKeyValue:@"scaleX"          value:s.scaleX          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"scaleY"          value:s.scaleY          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"rotate"          value:s.rotate          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"rotate3d"        value:s.rotate3d        separator:delimiter_k_v];
+    [arr addStringKeyValue:@"flip"            value:s.flip            separator:delimiter_k_v];
+    [arr addStringKeyValue:@"padding"         value:s.padding         separator:delimiter_k_v];
+    [arr addStringKeyValue:@"paddingLeft"     value:s.paddingLeft     separator:delimiter_k_v];
+    [arr addStringKeyValue:@"paddingTop"      value:s.paddingTop      separator:delimiter_k_v];
+    [arr addStringKeyValue:@"paddingRight"    value:s.paddingRight    separator:delimiter_k_v];
+    [arr addStringKeyValue:@"paddingBottom"   value:s.paddingBottom   separator:delimiter_k_v];
+    [arr addStringKeyValue:@"font"            value:s.font            separator:delimiter_k_v];
+    [arr addStringKeyValue:@"align"           value:s.align           separator:delimiter_k_v];
+    [arr addStringKeyValue:@"nowrap"          value:s.nowrap          separator:delimiter_k_v];
+    [arr addStringKeyValue:@"truncate"        value:s.truncate        separator:delimiter_k_v];
+    [arr addStringKeyValue:@"editable"        value:s.editable        separator:delimiter_k_v];
+    [arr addStringKeyValue:@"placeHolder"     value:s.placeHolder     separator:delimiter_k_v];
+    [arr addStringKeyValue:@"path"            value:s.path            separator:delimiter_k_v];
+    [arr addStringKeyValue:@"ID"              value:s.ID              separator:delimiter_k_v];
+    
+    return [arr componentsJoinedByString:delimiter_data];
+}
+
+style_t style_t::decode(str_t str) {
+    if (str) {
+        style_t ss;
+        NSString* delimiter_k_v  = @"\a";
+        NSString* delimiter_data = @"\b";
+        NSArray*  arr = str_split(str, delimiter_data);
+        for (NSString* data in arr) {
+            //NSLog(@"result :%@", data);
+            NSArray* kv = str_split(data, delimiter_k_v);
+            NSString* key   = [kv objectAtIndex:0];
+            NSString* value = [kv objectAtIndex:1];
+            BOOL isNull = str_eq(@"(null)",value);
+            
+            if (str_eq(@"x",key)) ss.x = isNull ? ss.x : str2numf(value);
+            else if (str_eq(@"y",key)) ss.y = isNull ? ss.y : str2numf(value);
+            else if (str_eq(@"w",key)) ss.w = isNull ? ss.w : str2numf(value);
+            else if (str_eq(@"h",key)) ss.h = isNull ? ss.h : str2numf(value);
+            else if (str_eq(@"z",key)) ss.z = isNull ? ss.z : str2numf(value);
+            
+            else if (str_eq(@"bgcolor",key)) ss.bgcolor = isNull ? ss.bgcolor : value;
+            else if (str_eq(@"color",key)) ss.color = isNull ? ss.color : value;
+            else if (str_eq(@"shadow",key)) ss.shadow = isNull ? ss.shadow : value;
+            else if (str_eq(@"border",key)) ss.border = isNull ? ss.border : value;
+            else if (str_eq(@"corner",key)) ss.corner = isNull ? ss.corner : str2numf(value);
+            else if (str_eq(@"contentMode",key)) ss.contentMode = isNull ? ss.contentMode : str2numf(value);
+            else if (str_eq(@"scaleX",key)) ss.scaleX = isNull ? ss.scaleX : str2numf(value);
+            else if (str_eq(@"scaleY",key)) ss.scaleY = isNull ? ss.scaleY : str2numf(value);
+            else if (str_eq(@"rotate",key)) ss.rotate = isNull ? ss.rotate : str2numf(value);
+            else if (str_eq(@"rotate3d",key)) ss.rotate3d = isNull ? ss.rotate3d : value;
+            else if (str_eq(@"flip",key)) ss.flip = isNull ? ss.flip : value;
+            else if (str_eq(@"padding",key)) ss.padding = isNull ? ss.padding : str2numf(value);
+            else if (str_eq(@"paddingLeft",key)) ss.paddingLeft = isNull ? ss.paddingLeft : str2numf(value);
+            else if (str_eq(@"paddingTop",key)) ss.paddingTop = isNull ? ss.paddingTop : str2numf(value);
+            else if (str_eq(@"paddingRight",key)) ss.paddingRight = isNull ? ss.paddingRight : str2numf(value);
+            else if (str_eq(@"paddingBottom",key)) ss.paddingBottom = isNull ? ss.paddingBottom : str2numf(value);
+            else if (str_eq(@"font",key)) ss.font = isNull ? ss.font : value;
+            else if (str_eq(@"align",key)) ss.align = isNull ? ss.align : value;
+            else if (str_eq(@"nowrap",key)) ss.nowrap = isNull ? ss.nowrap : str2numf(value);
+            else if (str_eq(@"truncate",key)) ss.truncate = isNull ? ss.truncate : str2numf(value);
+            else if (str_eq(@"editable",key)) ss.editable = isNull ? ss.editable : str2numf(value);
+            else if (str_eq(@"placeHolder",key)) ss.placeHolder = isNull ? ss.placeHolder : value;
+            else if (str_eq(@"path",key)) ss.path = isNull ? ss.path : value;
+            else if (str_eq(@"ID",key)) ss.ID = isNull ? ss.ID : value;
+        }
+        return ss;
+    }
+    return {};
 }
 
 #pragma mark - $View
@@ -652,14 +744,12 @@ value_t style_t::encode(){
 
 -(void) animate:(float)ms step:(anime_step_f)onStep end:(anime_end_f)onEnd opts:(anime_t)opts{
     if(opts.delay){
-        dic_t newOpt = @{@"style":@(opts.style), @"delta":@(opts.delta), @"delay":@0};
+        anime_t newOpt = {.style=opts.style, .delta=opts.delta, .delay=0};
         set_timeout(opts.delay,^void(dic_t d){
             if(d[@"o"]){
                 view_t o = d[@"o"];
-                anime_t ao;
-                decode(d[@"opts"],&ao);
-                [o animate:ms step:(anime_step_f)d[@"onStep"] end:d[@"onEnd"] opts:ao];
-            }}, @{@"o":self, @"opts":newOpt, @"onStep":onStep, @"onEnd":onEnd, @"ms":@(ms)});
+                [o animate:ms step:(anime_step_f)d[@"onStep"] end:d[@"onEnd"] opts:newOpt];
+            }}, @{@"o":self, @"onStep":onStep, @"onEnd":onEnd, @"ms":@(ms)});
         return;
     }
     long long start = time_ms();
@@ -677,13 +767,13 @@ value_t style_t::encode(){
         if (progress > 1) progress = 1;
         
         
-        anime_delta_t deltaname = (anime_delta_t)numi(d[@"delta_func"]);
+        anime_delta_t deltaname = delta_name;//(anime_delta_t)numi(d[@"delta_func"]);
         delta_f* delta_func = delta_funcs[deltaname];
         
         float delta;
         
         if(numi(d[@"style_name"])!=0){
-            anime_style_t stylename = (anime_style_t)numi(d[@"style_func"]);
+            anime_style_t stylename = style_name;//(anime_style_t)numi(d[@"style_func"]);
             style_f* style_func = style_funcs[stylename];
             delta = style_func(deltaname,progress);
         }else{
@@ -694,7 +784,8 @@ value_t style_t::encode(){
         
         //view_t o = d[@"o"];
         if(d[@"onStep"]){
-            ((anime_step_f) d[@"onStep"])(*o.owner, delta);
+            //((anime_step_f) d[@"onStep"])(*o.owner, delta);
+            onStep(*o.owner, delta);
         }
         int times = numi(d[@"times"]);
         if(progress >= 1 || i>times){
@@ -713,9 +804,11 @@ value_t style_t::encode(){
     [self animate:ms style:toStyle svg:nil end:onEnd opts:opts];
 }
 -(void) animate:(float)ms style:(style_t)ss svg:(str_t)svgpath end:(anime_end_f)onEnd opts:(anime_t)opts{
-    
-    [self set:@"orgStyle" value:_styles];
-    [self set:@"targetStyle" value:ss.encode()];
+    style_t org, tar;
+    org = style_t::decode(_styles);
+    tar = ss.clone();
+//    [self set:@"orgStyle" value:_styles];
+//    [self set:@"targetStyle" value:ss.encode()];
     
     if(svgpath){
         [self set:@"orgSvgPath" value:[self _getSvgPath:x orgY:y]];
@@ -724,10 +817,14 @@ value_t style_t::encode(){
     }
     
     [self animate:ms step:^($& n, float delta) {
-        style_t org, tar;
+        
         view_t v = n.view();
-        decode([v get:@"orgStyle"],&org);
-        decode([v get:@"targetStyle"],&tar);
+//        style_t org, tar;
+//        org = style_t::decode([v get:@"orgStyle"]);
+//        tar = style_t::decode([v get:@"targetStyle"]);
+        //decode([v get:@"orgStyle"],&org);
+        //decode([v get:@"targetStyle"],&tar);
+
         style_t s = {};
         //x, y, w, h
         if((tar.x||tar.x!=org.x) || (tar.y||tar.y!=org.y) || tar.w || tar.h){
@@ -850,21 +947,19 @@ value_t style_t::encode(){
                 float w = self.bounds.size.width,
                 h = self.bounds.size.height,
                 pw = 16, ph = 20, cw = cnt * pw;
-                /*
                 if(cw<=w*0.6){ // show as dot
-                    _pages = box({@((w-cw)/2.0f+self.frame.origin.x), @(h-ph+self.frame.origin.y), @(cw), @(ph), @1}).view;
+                    _pages = box({@((w-cw)/2.0f+self.frame.origin.x), @(h-ph+self.frame.origin.y), @(cw), @(ph), @1}).view();
                     style_t pstyle = {@0,@4,@8,@8,@0,@"#ffffff66",.corner=@4,.shadow=@"0 0 1 #00000099"};
                     for (int i = 0; i<cnt; i++)
-                        box((style_t){@(i*pw)} > pstyle) >> pages;
-                    [(view_t)_pages.nodes[0] setStyle:{.bgcolor=@"#ffffffcc"}];
+                        box((style_t){@(i*pw)} > pstyle) >> _pages;
+                    [(view_t)(_pages.nodes[0]) setStyles:{.bgcolor=@"#ffffffcc"}];
                     
                 }else{ // show as label
-                    pages = &label(sprintf(@"(1/%d)",cnt),
-                                   {@((w-100)/2.0f+view.frame.origin.x), @(h-ph+view.frame.origin.y), @100, @(ph), @1,
-                                       nil,@"#ffffff",.font=@"HelveticaNeue-CondensedBold,12",.align=@"center"});
+                    _pages = label(sprintf(@"(1/%d)",cnt),
+                                   (style_t){@((w-100)/2.0f+self.frame.origin.x), @(h-ph+self.frame.origin.y), @100, @(ph), @1,
+                                       .color=@"#ffffff",.font=@"HelveticaNeue-CondensedBold,12",.align=@"center"}).view();
                 }
-                *pages >> p;
-                */
+                [p addSubview:_pages];
             }
         }
     }

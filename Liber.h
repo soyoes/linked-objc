@@ -37,71 +37,74 @@ typedef $&(^grid_f)(obj_t, int, int);
 class style_t {
     
 public:
-    __unsafe_unretained num_t   x;  //left
-    __unsafe_unretained num_t   y;  //top
-    __unsafe_unretained num_t   w;  //width
-    __unsafe_unretained num_t   h;  //height
-    __unsafe_unretained num_t   z;  //z-index
-    __unsafe_unretained str_t   bgcolor;
+     num_t   x;  //left
+     num_t   y;  //top
+     num_t   w;  //width
+     num_t   h;  //height
+     num_t   z;  //z-index
+     str_t   bgcolor;
     //format(use rgbcolor) : 213,204,222,1.0
     //format(use rgbcolor) : 213,204,222
     //format(use hexcolor) : #336699CC //CC=alpha
     //format(use gradient) : #336699 #33CCFF
     //format(use gradient + location) : #336699:0 #3399CC:0.5 #33CCFF:1
     //format(use gradient + location + degree) : #336699:0 #3399CC:0.5 #33CCFF:1 90
-    __unsafe_unretained str_t   color;
+     str_t   color;
     //color: text color
     //color format @see bgcolor,
-    __unsafe_unretained str_t   shadow;
+     str_t   shadow;
     //format : x y radius colorStr opacity
-    __unsafe_unretained str_t   border;
+     str_t   border;
     //format :width color/image corner-radius
     //format(use image) : 1 myline.png 4        //dash|dot ...
     //format(use rgbcolor) : 1 213,204,222
     //format(use hexcolor) : 1 #CCFF33 2
-    __unsafe_unretained num_t   alpha;
+     num_t   alpha;
     //0~1   0.0f:opacity=1, 1.0f:opacity=0
-    __unsafe_unretained num_t   corner;
+     num_t   corner;
     //@see border
     
-    __unsafe_unretained num_t   contentMode;//kModeFill/kModeCropFit/kModeFit/kModeOrg/kModeCustom
+     num_t   contentMode;//kModeFill/kModeCropFit/kModeFit/kModeOrg/kModeCustom
     
-    __unsafe_unretained num_t   scaleX, scaleY;//<0.00 & <x
-    __unsafe_unretained num_t   rotate;
+     num_t   scaleX, scaleY;//<0.00 & <x
+     num_t   rotate;
     //formart : degree in float
     //example : 30,45,60 ...
-    __unsafe_unretained str_t  rotate3d;
+     str_t  rotate3d;
     //format : degree, rotateX, rotateY, rotateZ, respective, anchorX, anchorY, translateX, translateY, translateZ
     //example : 45,1,0,0,500,0.5,1
-    __unsafe_unretained str_t   flip;
+     str_t   flip;
     //flip "H"=horizontal, "V"=vertical
     
-    __unsafe_unretained num_t   padding, paddingLeft, paddingTop, paddingRight, paddingBottom;
+     num_t   padding, paddingLeft, paddingTop, paddingRight, paddingBottom;
     //working with label(text,...) only
-    __unsafe_unretained str_t   font;
+     str_t   font;
     //format : fontname,fontsize
-    __unsafe_unretained str_t   align;
+     str_t   align;
     //justified | center | left | right
-    __unsafe_unretained bool_t    nowrap;
+     bool_t    nowrap;
     // wrapped:  wrap text to multiple row , default=true
     //format : false
-    __unsafe_unretained bool_t    truncate;
+     bool_t    truncate;
     // truncate:  truncate text to ..., default = no truncate
     //format : true
-    __unsafe_unretained bool_t    editable;
+     bool_t    editable;
     //format : true, if clicked, add dynamical textfield automatically
 
-    __unsafe_unretained str_t   placeHolder;
+     str_t   placeHolder;
     //=css placeholder
-    __unsafe_unretained str_t   path;
+     str_t   path;
     //svg path
-    __unsafe_unretained str_t   ID;
+     str_t   ID;
 
     style_t  operator=(style_t s); //asign values of this with s
     style_t  operator>(style_t s); //use this to override s, and return this
     style_t  operator<(style_t s); //use s to override this, and return this
     
-    value_t  encode();
+    style_t clone();
+    str_t  encode();
+    str_t  encode(style_t s);
+    static style_t  decode(str_t);
 };
 
 
@@ -296,6 +299,7 @@ str_t str_replace(str_t s, str_t target,  str_t replace);
 str_t str_regex_replace(str_t s, str_t regex,  str_t replace);
 int   str2i(str_t s);
 float str2f(str_t s);
+num_t str2numf(str_t s);
 bool  is_str(obj_t o);
 int   str_idx(str_t s, str_t target);
 const char * cstr(str_t s);

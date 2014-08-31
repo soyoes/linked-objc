@@ -68,11 +68,11 @@ void images_example($& target){
     <<svgp(@"M40 0 L80 80 L0 80 Z", (style_t){@210,@110,.shadow=@"3 3 3 #000000ff"}>s_box).image(@"kodaru.jpg")
     
     //rotate 3d
-    <<img(@"kodaru.jpg", (style_t){@10,@210,.contentMode=kModeCropFit,.rotate3d=@"45,1,0,0,200,0.5,1"}>s_box)
+    <<img(@"kodaru.jpg", (style_t){@10,@210,.contentMode=kModeCropFit,.rotate3d=@"45,1,0,0,200,0.5,0.5"}>s_box)
     //rotate 2d
     <<img(@"kodaru.jpg", (style_t){@110,@210,.contentMode=kModeCropFit,.rotate=@45}>s_box)
     //rotate 3d
-    <<img(@"kodaru.jpg", (style_t){@210,@210,.contentMode=kModeCropFit,.rotate3d=@"45,0,1,0,200,0.5,1"}>s_box)
+    <<img(@"kodaru.jpg", (style_t){@210,@210,.contentMode=kModeCropFit,.rotate3d=@"45,0,1,0,200,0.5,0.5"}>s_box)
     
     //flipH
     <<img(@"kodaru.jpg", (style_t){@10,@310,.contentMode=kModeCropFit,.flip=@"H"}>s_box)
@@ -308,7 +308,7 @@ void image_editor_example($& target){
     };
     
     ges_f gh = ^(ges_t g, $& v, dic_t p){
-        int i = numi(p[@""]);
+        int i = numi(p[@"i"]);
         $ im;
         decode(p[@"im"], &im);
         if(i<0){
@@ -351,11 +351,11 @@ void animation_example($& target){
     p[1]->animate(1000, ^($ &o, float delta) {
         o.setStyle({.h=@(80+delta*400)});
     }, ^($& o) {NSLog(@"finished");}, {.delta=kDeltaQuad});
-//
-//    p[2]->animate(1000, ^($ &o, float delta) {
-//        o.setStyle({.y=@(10+delta*400)});
-//    }, ^($& o) {NSLog(@"finished");}, {.delta=kDeltaBounce,.style=kEaseInOut});
-//    
+
+    p[2]->animate(1000, ^($ &o, float delta) {
+        o.setStyle({.y=@(10+delta*400)});
+    }, ^($& o) {NSLog(@"finished");}, {.delta=kDeltaBounce,.style=kEaseInOut});
+    
 }
 
 //Animations(rotate delay)
@@ -401,6 +401,7 @@ void svg_example($& target){
     int __block i=0;
     int len = 800;
     $& a = box(s_panel)
+    
     <<(svgp(shapes[i++],(style_t){@50,@50,@200,@200}>s_box)
        .animate(len,{.bgcolor=@"#ff0000"},shapes[i++],^($&v){
         v.animate(len,{.bgcolor=@"#ffff00"},shapes[i++],^($&v){
