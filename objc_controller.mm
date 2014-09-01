@@ -24,7 +24,7 @@ void controller_t::present(effect_in_t instyle, anime_t animeOpts){
 }
 
 void controller_t::present(effect_in_t instyle, anime_end_f onEnd, anime_t animeOpts){
-    style_t from={}, to={};
+    style_t from={.x=@0}, to={.x=@0, .y=@0};
     anime_delta_t delta = kDeltaQuad5;
     anime_style_t style = kEaseOut;
     switch (instyle) {

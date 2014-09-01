@@ -309,8 +309,8 @@ void image_editor_example($& target){
     
     ges_f gh = ^(ges_t g, $& v, dic_t p){
         int i = numi(p[@"i"]);
-        $ im;
-        decode(p[@"im"], &im);
+        //$ im;
+        //decode(p[@"im"], &im);
         if(i<0){
             im.image(display);
         }else{

@@ -755,6 +755,7 @@ style_t style_t::decode(str_t str) {
     long long start = time_ms();
     anime_delta_t delta_name = opts.delta;
     anime_style_t style_name = opts.style;
+    onEnd = onEnd == nil ? ^($&){} : onEnd;
     float interval = 16;
     int times = ms/interval;
     //cout << "times = " << times << endl;
