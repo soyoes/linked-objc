@@ -457,11 +457,13 @@ void set_timeout(float millisec, timeout_h block, dic_t dic){
  
  */
 void set_interval(float millisec, timeinterval_h block, dic_t dic){
+    
     if(!__animes) __animes=mdic(nil);
     //value_t nv = [NSValue valueWithBytes:&block objCType:@encode(timeinterval_h)];
     id nv = [block copy];
     if(!__animes[nv])
         __animes[nv]=@0;
+    
     dispatch_time_t span = dispatch_time(DISPATCH_TIME_NOW, millisec*0.001f * NSEC_PER_SEC);
     dispatch_after(span, dispatch_get_main_queue(), ^(void){
         int counter = [__animes[nv] intValue];

@@ -53,6 +53,7 @@ void controller_t::present(effect_in_t instyle, anime_end_f onEnd, anime_t anime
             setStyle(from) >> __rootview;
             return;
     }
+    
     if(!animeOpts.delta)
         animeOpts.delta= delta;
     if(!animeOpts.style)
@@ -128,6 +129,9 @@ void controller_t::ondraw(dic_t params){}
 void controller_t::onbackground(){}
 void controller_t::onforeground(){}
 str_t controller_t::name(){return @"__DEFAULT__";}
+void controller_t::init() {
+    __controller =str(typeid(*this).name());
+}
 /*
  remove all views from memory.
  be careful to use this.
@@ -135,7 +139,8 @@ str_t controller_t::name(){return @"__DEFAULT__";}
 void controller_t::clearAll(){
     str_t cname = this->name();
     if(__nodes && cname && __nodes[cname]){
-        for (str_t va in __nodes[cname]) {
+        NSArray* keys = [__nodes[cname] allKeys];
+        for (str_t va in keys) {
             view_t v = __nodes[cname][va];
             v.owner->remove();
             //delete(v.owner); // This cause memory leak.

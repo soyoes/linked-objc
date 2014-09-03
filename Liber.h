@@ -224,6 +224,7 @@ public:
     virtual void onforeground();
     void clearAll();
     virtual str_t name();
+    void init();
 //private:
 //    str_t lastCtlName;
 };

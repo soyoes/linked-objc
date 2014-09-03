@@ -760,6 +760,7 @@ style_t style_t::decode(str_t str) {
     int times = ms/interval;
     //cout << "times = " << times << endl;
     set_interval(interval, ^bool(dic_t d, int i){
+        
         long long start = [d[@"start"] longLongValue];
         float duration = [d[@"duration"] floatValue];
         long long current = time_ms();
